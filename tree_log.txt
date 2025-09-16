@@ -1,0 +1,41 @@
+Degree-Compass/
+├── tree_log.txt
+├── server/
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── .env
+│   └── src/
+│       ├── config/
+│       ├── server.js
+│       ├── models/
+│       ├── api/
+│       │   ├── middleware/
+│       │   ├── controllers/
+│       │   │   └── rules.controller.js
+│       │   └── routes/
+│       │       └── rules.routes.js
+│       ├── app.js
+│       └── services/
+│           └── degreeAuditService.js
+├── README.md
+├── .gitignore
+├── dir_creator.sh
+├── tree_logger.py
+├── client/
+│   ├── public/
+│   ├── package-lock.json
+│   ├── package.json
+│   └── src/
+│       ├── index.js
+│       ├── components/
+│       │   ├── Button.js
+│       │   └── CourseList.js
+│       ├── api/
+│       │   └── api.js
+│       ├── assets/
+│       ├── pages/
+│       │   ├── RulesPage.js
+│       │   └── PlannerPage.js
+│       ├── App.js
+│       └── store/
+└── StyleGuide.md
