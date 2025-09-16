@@ -1,0 +1,7 @@
+{
+  "db_tables": {
+    "degree_reqs": "DegreeRequirements",
+    "students": "StudentDatabase",
+    "courses": "CourseDatabase"
+  }
+}
