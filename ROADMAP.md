@@ -258,8 +258,8 @@ class ScheduleBuilder {
 
 ### Database Choice
 ```javascript
-// For NoSQL (MongoDB) - Recommended
-const mongoose = require('mongoose');
+// For NoSQL (DynamoDB)
+// TODO: AWS SDK Include
 
 // For SQL alternative
 const { Sequelize, DataTypes } = require('sequelize');
