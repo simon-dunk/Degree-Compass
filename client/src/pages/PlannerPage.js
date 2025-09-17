@@ -6,9 +6,11 @@ const PlannerPage = () => {
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [pinnedCourses, setPinnedCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const [showCompletedCourses, setShowCompletedCourses] = useState(false); // <-- New state for visibility
 
   // Fetch the list of all students on initial component load
   useEffect(() => {
@@ -36,7 +38,9 @@ const PlannerPage = () => {
     try {
       setIsLoading(true);
       setError(null);
-      setGeneratedPlan(null); // Clear old plan when student changes
+      setGeneratedPlan(null);
+      setPinnedCourses([]);
+      setShowCompletedCourses(false); // Hide completed courses when student changes
       const report = await fetchAuditReport(selectedStudentId);
       setAuditReport(report);
     } catch (err) {
@@ -56,7 +60,7 @@ const PlannerPage = () => {
     setIsGenerating(true);
     setError(null);
     try {
-      const plan = await generatePlan(selectedStudentId);
+      const plan = await generatePlan(selectedStudentId, pinnedCourses);
       setGeneratedPlan(plan);
     } catch (err) {
       setError(`Failed to generate plan: ${err.message}`);
@@ -65,11 +69,21 @@ const PlannerPage = () => {
     }
   };
 
+  // Handler for pinning/unpinning courses via checkbox
+  const handlePinToggle = (course) => {
+    setPinnedCourses(prevPinned => {
+      const isPinned = prevPinned.some(p => p.Subject === course.Subject && p.CourseNumber === course.CourseNumber);
+      if (isPinned) {
+        return prevPinned.filter(p => !(p.Subject === course.Subject && p.CourseNumber === course.CourseNumber));
+      } else {
+        return [...prevPinned, { Subject: course.Subject, CourseNumber: course.CourseNumber }];
+      }
+    });
+  };
 
   return (
     <div style={styles.container}>
       <h1>Degree Planner</h1>
-
       <div style={styles.selectionContainer}>
         <label htmlFor="student-select" style={styles.label}>Select Student:</label>
         <select
@@ -90,61 +104,105 @@ const PlannerPage = () => {
       {isLoading && <p>Loading...</p>}
       {error && <p style={styles.errorText}>{error}</p>}
 
-      {/* --- Main Content Area --- */}
       <div style={styles.mainContent}>
-        {/* --- Left Side: Audit Report --- */}
         <div style={styles.auditContainer}>
-            <h2>Degree Progress Report</h2>
-            {auditReport && !isLoading && auditReport.results.map((result) => (
-                <div key={result.requirementType} style={styles.card}>
+          <h2>Degree Progress Report</h2>
+
+          {/* --- New Button to Toggle Completed Courses --- */}
+          {auditReport && (
+            <button onClick={() => setShowCompletedCourses(!showCompletedCourses)} style={{...styles.button, ...styles.toggleButton}}>
+              {showCompletedCourses ? 'Hide' : 'Show'} Completed Courses
+            </button>
+          )}
+
+          {/* --- New Conditionally Rendered Section --- */}
+          {showCompletedCourses && auditReport?.studentCompletedCourses && (
+            <div style={{...styles.card, margin: '1rem 0'}}>
+              <div style={styles.cardHeader}><h3>Completed Courses</h3></div>
+              <ul style={{listStyle: 'none', padding: '0 1.5rem'}}>
+                {auditReport.studentCompletedCourses.map((course, index) => (
+                  <li key={index} style={{padding: '0.5rem 0', borderBottom: '1px solid #eee'}}>
+                    {course.Subject} {course.CourseNumber} (Grade: {course.Grade})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {auditReport && !isLoading ? (
+            auditReport.results.map((result) => (
+              <div key={result.requirementType} style={{...styles.card, marginTop: '1rem'}}>
                 <div style={styles.cardHeader}>
-                    <h3>{result.requirementType}</h3>
-                    <span style={result.isSatisfied ? styles.statusMet : styles.statusNotMet}>
+                  <h3>{result.requirementType}</h3>
+                  <span style={result.isSatisfied ? styles.statusMet : styles.statusNotMet}>
                     {result.isSatisfied ? '✔ Satisfied' : '✖ Not Satisfied'}
-                    </span>
+                  </span>
                 </div>
                 <div style={styles.cardBody}>
-                    <p>{result.notes}</p>
-                    {result.coursesStillNeeded && result.coursesStillNeeded.length > 0 && (
+                  <p>{result.notes}</p>
+                  {result.coursesStillNeeded && result.coursesStillNeeded.length > 0 && (
                     <div>
-                        <strong>Courses Needed:</strong>
-                        <ul>
+                      <strong>Courses Needed:</strong>
+                      <ul>
                         {result.coursesStillNeeded.map((course, index) => (
-                            <li key={index}>{course.Subject} {course.CourseNumber}</li>
+                          <li key={index}>{course.Subject} {course.CourseNumber}</li>
                         ))}
-                        </ul>
+                      </ul>
                     </div>
-                    )}
+                  )}
                 </div>
-                </div>
-            ))}
+              </div>
+            ))
+          ) : !isLoading && <p>No audit report available.</p>}
         </div>
 
-        {/* --- Right Side: Plan Generator --- */}
         <div style={styles.plannerContainer}>
-            <h2>Graduation Plan Generator</h2>
-            <button onClick={handleGeneratePlan} disabled={!auditReport || isGenerating} style={styles.button}>
-                {isGenerating ? 'Generating...' : 'Generate a Plan'}
-            </button>
-            {generatedPlan && (
-                <div style={styles.planResults}>
-                    <h3>Suggested Plan:</h3>
-                    {generatedPlan.map((semester) => (
-                        <div key={semester.semester} style={{...styles.card, marginBottom: '1rem'}}>
-                            <div style={styles.cardHeader}>
-                                <h4>{semester.semester} ({semester.totalCredits} Credits)</h4>
-                            </div>
-                            <ul style={{listStyle: 'none', padding: '0 1.5rem'}}>
-                                {semester.courses.map(course => (
-                                    <li key={`${course.Subject}${course.CourseNumber}`} style={{padding: '0.5rem 0', borderBottom: '1px solid #eee'}}>
-                                        {course.Subject} {course.CourseNumber} ({course.Credits} credits)
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+          <h2>Graduation Plan Generator</h2>
+          
+          {auditReport?.eligibleNextCourses && auditReport.eligibleNextCourses.length > 0 && (
+            <div style={styles.pinningSection}>
+              <h4>Pin Courses for Next Semester</h4>
+              {auditReport.eligibleNextCourses.map(course => {
+                const isChecked = pinnedCourses.some(p => p.Subject === course.Subject && p.CourseNumber === course.CourseNumber);
+                return (
+                  <div key={`${course.Subject}${course.CourseNumber}`}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handlePinToggle(course)}
+                      />
+                      {course.Subject} {course.CourseNumber}
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <button onClick={handleGeneratePlan} disabled={!auditReport || isGenerating} style={styles.button}>
+            {isGenerating ? 'Generating...' : 'Generate a Plan'}
+          </button>
+
+          {generatedPlan && (
+            <div style={styles.planResults}>
+              <h3>Suggested Plan:</h3>
+              {generatedPlan.map((semester) => (
+                <div key={semester.semester} style={{...styles.card, marginBottom: '1rem'}}>
+                  <div style={styles.cardHeader}>
+                    <h4>{semester.semester} ({semester.totalCredits} Credits)</h4>
+                  </div>
+                  <ul style={{listStyle: 'none', padding: '0 1.5rem'}}>
+                    {semester.courses.map(course => (
+                      <li key={`${course.Subject}${course.CourseNumber}`} style={{padding: '0.5rem 0', borderBottom: '1px solid #eee'}}>
+                        {course.Subject} {course.CourseNumber} - {course.Name} ({course.Credits} credits)
+                      </li>
                     ))}
+                  </ul>
                 </div>
-            )}
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -188,9 +246,22 @@ const styles = {
   },
   button: {
     padding: '12px 24px', fontSize: '1.1rem', cursor: 'pointer', border: 'none',
-    borderRadius: '5px', backgroundColor: '#005826', color: 'white', width: '100%'
+    borderRadius: '5px', backgroundColor: '#005826', color: 'white', width: '100%',
+  },
+  toggleButton: {
+    width: 'auto',
+    backgroundColor: '#555',
+    fontSize: '0.9rem',
+    padding: '8px 16px',
+    marginBottom: '1rem'
   },
   planResults: { marginTop: '1.5rem' },
+  pinningSection: {
+    marginBottom: '1.5rem',
+    padding: '1rem',
+    border: '1px solid #eee',
+    borderRadius: '8px',
+  },
 };
 
 export default PlannerPage;

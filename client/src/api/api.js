@@ -6,7 +6,7 @@ const API_BASE_URL = 'http://localhost:5050/api';
  * @param {object} options - The options for the fetch request.
  * @returns {Promise<any>} The JSON response from the API.
  */
-const apiRequest = async (url, options = {}) => {
+export const apiRequest = async (url, options = {}) => {
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
@@ -134,4 +134,8 @@ export const generatePlan = (studentId, pinnedCourses = []) => {
     },
     body: JSON.stringify({ pinnedCourses }),
   });
+};
+
+export const fetchAllCourses = () => {
+  return apiRequest(`${API_BASE_URL}/courses`);
 };

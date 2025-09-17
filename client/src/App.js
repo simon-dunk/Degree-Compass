@@ -1,19 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
+import NavBar from './components/NavBar';
 import RulesPage from './pages/RulesPage';
 import OverridesPage from './pages/OverridesPage';
-import PlannerPage from './pages/PlannerPage'; // 1. Import the new page
+import PlannerPage from './pages/PlannerPage';
+import DevToolsPage from './pages/DevToolsPage';
 
 function App() {
-  return (
-    <div className="App">
-      {/* Student View */}
-      <PlannerPage />
+  const [currentPage, setCurrentPage] = useState('planner');
 
-      {/* Admin Views */}
-      <hr style={{ margin: '4rem 0', border: '2px solid #005826' }} />
-      <RulesPage />
-      <hr style={{ margin: '4rem 0', border: '2px solid #005826' }} />
-      <OverridesPage />
+  return (
+    <div>
+      {/* 2. Use the new NavBar component */}
+      <NavBar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+
+      <main>
+        {/* The content below the navbar will change based on the state */}
+        {currentPage === 'planner' && <PlannerPage />}
+        {currentPage === 'rules' && <RulesPage />}
+        {currentPage === 'overrides' && <OverridesPage />}
+        {currentPage === 'dev' && <DevToolsPage />}
+      </main>
     </div>
   );
 }

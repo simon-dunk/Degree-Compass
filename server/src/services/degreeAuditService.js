@@ -1,6 +1,6 @@
 import { getStudentById } from './studentsService.js';
 import { getRulesByMajor } from './rulesService.js';
-import { getCourseByKey } from './coursesService.js'; // 1. Import the new course service
+import { getCourseByKey } from './coursesService.js';
 
 /**
  * Checks if a student has completed a specific course.
@@ -103,6 +103,7 @@ export const runDegreeAudit = async (studentId) => {
     studentId: student.StudentId,
     major: majorCode,
     auditDate: new Date().toISOString(),
+    studentCompletedCourses: student.CompletedCourses || [],
     results: auditResults,
     eligibleNextCourses: eligibleCourses, // Add the new list to our report
   };
