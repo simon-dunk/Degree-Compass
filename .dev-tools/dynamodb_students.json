@@ -4,25 +4,28 @@
       "N": "1000"
     },
     "FirstName": {
-      "S": "Leslie"
+      "S": "Victor"
     },
     "LastName": {
-      "S": "White"
+      "S": "Alexander"
     },
     "Email": {
-      "S": "leslie.white45@university.edu"
+      "S": "victor.alexander75@university.edu"
     },
     "Major": {
       "L": [
         {
-          "S": "CIS"
+          "S": "CHEM"
+        },
+        {
+          "S": "MATH"
         }
       ]
     },
     "Minor": {
       "L": [
         {
-          "S": "PSYC"
+          "S": "HIST"
         }
       ]
     },
@@ -34,13 +37,32 @@
         {
           "M": {
             "Subject": {
-              "S": "MATH"
+              "S": "CIS"
             },
             "CourseNumber": {
-              "N": "2055"
+              "N": "3030"
             },
             "Grade": {
-              "N": "2.92"
+              "N": "2.6"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2024"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CHEM"
+            },
+            "CourseNumber": {
+              "N": "4312"
+            },
+            "Grade": {
+              "N": "3.19"
             },
             "Semester": {
               "S": "Spring"
@@ -53,13 +75,13 @@
         {
           "M": {
             "Subject": {
-              "S": "CIS"
+              "S": "BIOL"
             },
             "CourseNumber": {
-              "N": "1998"
+              "N": "3079"
             },
             "Grade": {
-              "N": "2.89"
+              "N": "3.79"
             },
             "Semester": {
               "S": "Summer"
@@ -72,16 +94,16 @@
         {
           "M": {
             "Subject": {
-              "S": "ENGL"
+              "S": "PSYC"
             },
             "CourseNumber": {
-              "N": "1468"
+              "N": "3189"
             },
             "Grade": {
-              "N": "2.47"
+              "N": "3.74"
             },
             "Semester": {
-              "S": "Spring"
+              "S": "Fall"
             },
             "Year": {
               "N": "2022"
@@ -94,51 +116,13 @@
               "S": "HIST"
             },
             "CourseNumber": {
-              "N": "1929"
+              "N": "2376"
             },
             "Grade": {
-              "N": "2.31"
-            },
-            "Semester": {
-              "S": "Spring"
-            },
-            "Year": {
-              "N": "2021"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "ART"
-            },
-            "CourseNumber": {
-              "N": "2131"
-            },
-            "Grade": {
-              "N": "3.07"
+              "N": "2.21"
             },
             "Semester": {
               "S": "Summer"
-            },
-            "Year": {
-              "N": "2021"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "ENGL"
-            },
-            "CourseNumber": {
-              "N": "3891"
-            },
-            "Grade": {
-              "N": "2.58"
-            },
-            "Semester": {
-              "S": "Fall"
             },
             "Year": {
               "N": "2024"
@@ -151,16 +135,16 @@
               "S": "CHEM"
             },
             "CourseNumber": {
-              "N": "2277"
+              "N": "1816"
             },
             "Grade": {
-              "N": "3.34"
+              "N": "2.55"
             },
             "Semester": {
-              "S": "Summer"
+              "S": "Spring"
             },
             "Year": {
-              "N": "2023"
+              "N": "2024"
             }
           }
         },
@@ -170,51 +154,13 @@
               "S": "PSYC"
             },
             "CourseNumber": {
-              "N": "2709"
+              "N": "3335"
             },
             "Grade": {
-              "N": "3.19"
+              "N": "3.11"
             },
             "Semester": {
               "S": "Fall"
-            },
-            "Year": {
-              "N": "2024"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "CHEM"
-            },
-            "CourseNumber": {
-              "N": "4196"
-            },
-            "Grade": {
-              "N": "3.53"
-            },
-            "Semester": {
-              "S": "Fall"
-            },
-            "Year": {
-              "N": "2024"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "ENGL"
-            },
-            "CourseNumber": {
-              "N": "2755"
-            },
-            "Grade": {
-              "N": "2.13"
-            },
-            "Semester": {
-              "S": "Summer"
             },
             "Year": {
               "N": "2021"
@@ -224,16 +170,16 @@
         {
           "M": {
             "Subject": {
-              "S": "CIS"
+              "S": "ENGL"
             },
             "CourseNumber": {
-              "N": "1788"
+              "N": "2987"
             },
             "Grade": {
-              "N": "2.54"
+              "N": "3.79"
             },
             "Semester": {
-              "S": "Summer"
+              "S": "Fall"
             },
             "Year": {
               "N": "2023"
@@ -246,149 +192,16 @@
               "S": "ENGL"
             },
             "CourseNumber": {
-              "N": "3672"
+              "N": "1854"
             },
             "Grade": {
-              "N": "2.49"
+              "N": "3.3"
             },
             "Semester": {
               "S": "Spring"
             },
             "Year": {
               "N": "2024"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "MATH"
-            },
-            "CourseNumber": {
-              "N": "1384"
-            },
-            "Grade": {
-              "N": "2.36"
-            },
-            "Semester": {
-              "S": "Fall"
-            },
-            "Year": {
-              "N": "2022"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "CIS"
-            },
-            "CourseNumber": {
-              "N": "3037"
-            },
-            "Grade": {
-              "N": "3.6"
-            },
-            "Semester": {
-              "S": "Fall"
-            },
-            "Year": {
-              "N": "2021"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "MATH"
-            },
-            "CourseNumber": {
-              "N": "2588"
-            },
-            "Grade": {
-              "N": "2.75"
-            },
-            "Semester": {
-              "S": "Fall"
-            },
-            "Year": {
-              "N": "2023"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "BIOL"
-            },
-            "CourseNumber": {
-              "N": "3717"
-            },
-            "Grade": {
-              "N": "3.74"
-            },
-            "Semester": {
-              "S": "Summer"
-            },
-            "Year": {
-              "N": "2021"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "CHEM"
-            },
-            "CourseNumber": {
-              "N": "1256"
-            },
-            "Grade": {
-              "N": "2.7"
-            },
-            "Semester": {
-              "S": "Fall"
-            },
-            "Year": {
-              "N": "2024"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "ART"
-            },
-            "CourseNumber": {
-              "N": "3216"
-            },
-            "Grade": {
-              "N": "3.57"
-            },
-            "Semester": {
-              "S": "Summer"
-            },
-            "Year": {
-              "N": "2021"
-            }
-          }
-        },
-        {
-          "M": {
-            "Subject": {
-              "S": "CHEM"
-            },
-            "CourseNumber": {
-              "N": "2559"
-            },
-            "Grade": {
-              "N": "3.94"
-            },
-            "Semester": {
-              "S": "Summer"
-            },
-            "Year": {
-              "N": "2023"
             }
           }
         }
@@ -402,10 +215,10 @@
         {
           "M": {
             "Subject": {
-              "S": "MATH"
+              "S": "BIOL"
             },
             "CourseNumber": {
-              "N": "2528"
+              "N": "2768"
             }
           }
         },
@@ -415,7 +228,7 @@
               "S": "HIST"
             },
             "CourseNumber": {
-              "N": "4165"
+              "N": "1061"
             }
           }
         },
@@ -425,7 +238,17 @@
               "S": "ART"
             },
             "CourseNumber": {
-              "N": "4174"
+              "N": "2775"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ENGL"
+            },
+            "CourseNumber": {
+              "N": "3905"
             }
           }
         }
@@ -438,84 +261,20 @@
             {
               "M": {
                 "Subject": {
-                  "S": "ENGL"
+                  "S": "HIST"
                 },
                 "CourseNumber": {
-                  "N": "3336"
+                  "N": "3749"
                 }
               }
             },
             {
               "M": {
                 "Subject": {
-                  "S": "ART"
+                  "S": "CIS"
                 },
                 "CourseNumber": {
-                  "N": "1243"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "CHEM"
-                },
-                "CourseNumber": {
-                  "N": "4824"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "BIOL"
-                },
-                "CourseNumber": {
-                  "N": "4178"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "ENGL"
-                },
-                "CourseNumber": {
-                  "N": "3326"
-                }
-              }
-            }
-          ]
-        },
-        "Spring2025": {
-          "L": [
-            {
-              "M": {
-                "Subject": {
-                  "S": "MATH"
-                },
-                "CourseNumber": {
-                  "N": "4765"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "ENGL"
-                },
-                "CourseNumber": {
-                  "N": "4484"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "ART"
-                },
-                "CourseNumber": {
-                  "N": "4641"
+                  "N": "2623"
                 }
               }
             },
@@ -525,71 +284,27 @@
                   "S": "HIST"
                 },
                 "CourseNumber": {
-                  "N": "2828"
+                  "N": "1359"
                 }
               }
             },
             {
               "M": {
                 "Subject": {
-                  "S": "BIOL"
+                  "S": "CHEM"
                 },
                 "CourseNumber": {
-                  "N": "3090"
-                }
-              }
-            }
-          ]
-        },
-        "Fall2024": {
-          "L": [
-            {
-              "M": {
-                "Subject": {
-                  "S": "ART"
-                },
-                "CourseNumber": {
-                  "N": "2139"
+                  "N": "4701"
                 }
               }
             },
             {
               "M": {
                 "Subject": {
-                  "S": "BIOL"
+                  "S": "CIS"
                 },
                 "CourseNumber": {
-                  "N": "3573"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "ART"
-                },
-                "CourseNumber": {
-                  "N": "2911"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "ART"
-                },
-                "CourseNumber": {
-                  "N": "3644"
-                }
-              }
-            },
-            {
-              "M": {
-                "Subject": {
-                  "S": "ART"
-                },
-                "CourseNumber": {
-                  "N": "3848"
+                  "N": "1052"
                 }
               }
             }

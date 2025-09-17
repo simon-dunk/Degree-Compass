@@ -1,4 +1,4 @@
-import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, UpdateCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'; 
 import { docClient } from '../config/db.js';
 import fs from 'fs';
 import path from 'path';
@@ -81,5 +81,27 @@ export const removeOverrideFromStudent = async (studentId, overrideIndex) => {
   } catch (error) {
     console.error(`DynamoDB Error removing override from student ${studentId}:`, error);
     throw new Error('Could not remove override from student.');
+  }
+};
+
+/**
+ * Scans the StudentDatabase table to get a list of all students.
+ * @returns {Promise<object[]>} A promise that resolves to an array of student items.
+ */
+export const getAllStudents = async () => {
+  const params = {
+    TableName: tableName,
+    // ProjectionExpression can be used to only return specific attributes
+    // For now, we get the whole item to display name and ID
+    ProjectionExpression: 'StudentId, FirstName, LastName',
+  };
+  try {
+    const command = new ScanCommand(params);
+    const { Items } = await docClient.send(command);
+    // Sort students by ID
+    return (Items || []).sort((a, b) => a.StudentId - b.StudentId);
+  } catch (error) {
+    console.error('DynamoDB Error getting all students:', error);
+    throw new Error('Could not fetch list of students from database.');
   }
 };

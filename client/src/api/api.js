@@ -102,3 +102,36 @@ export const deleteStudentOverride = (studentId, overrideIndex) => {
     method: 'DELETE',
   });
 };
+
+/**
+ * Fetches a degree audit report for a specific student.
+ * @param {string} studentId - The ID of the student to audit.
+ * @returns {Promise<object>} A promise that resolves to the audit report.
+ */
+export const fetchAuditReport = (studentId) => {
+  return apiRequest(`${API_BASE_URL}/audit/${studentId}`);
+};
+
+/**
+ * Fetches a list of all students.
+ * @returns {Promise<object[]>} A promise that resolves to an array of student objects.
+ */
+export const fetchAllStudents = () => {
+  return apiRequest(`${API_BASE_URL}/students`);
+};
+
+/**
+ * Requests a generated degree plan for a specific student.
+ * @param {string} studentId - The ID of the student.
+ * @param {Array<object>} [pinnedCourses=[]] - Optional list of courses to prioritize.
+ * @returns {Promise<object>} A promise that resolves to the generated plan.
+ */
+export const generatePlan = (studentId, pinnedCourses = []) => {
+  return apiRequest(`${API_BASE_URL}/planner/generate/${studentId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ pinnedCourses }),
+  });
+};

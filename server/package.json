@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "nodemon src/server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "seed": "node scripts/seed.js"
   },
   "author": "",
   "license": "ISC",

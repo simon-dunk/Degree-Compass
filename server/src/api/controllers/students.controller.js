@@ -63,3 +63,17 @@ export const removeStudentOverride = async (req, res) => {
     res.status(500).json({ message: 'Server error removing override.', error: error.message });
   }
 };
+
+/**
+ * @desc    Get a list of all students
+ * @route   GET /api/students
+ * @access  Private (Admin/User)
+ */
+export const getAllStudents = async (req, res) => {
+  try {
+    const students = await studentsService.getAllStudents();
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error fetching students.', error: error.message });
+  }
+};
