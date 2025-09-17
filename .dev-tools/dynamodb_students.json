@@ -1,0 +1,601 @@
+[
+  {
+    "StudentId": {
+      "N": "1000"
+    },
+    "FirstName": {
+      "S": "Leslie"
+    },
+    "LastName": {
+      "S": "White"
+    },
+    "Email": {
+      "S": "leslie.white45@university.edu"
+    },
+    "Major": {
+      "L": [
+        {
+          "S": "CIS"
+        }
+      ]
+    },
+    "Minor": {
+      "L": [
+        {
+          "S": "PSYC"
+        }
+      ]
+    },
+    "GraduationYear": {
+      "N": "2025"
+    },
+    "CompletedCourses": {
+      "L": [
+        {
+          "M": {
+            "Subject": {
+              "S": "MATH"
+            },
+            "CourseNumber": {
+              "N": "2055"
+            },
+            "Grade": {
+              "N": "2.92"
+            },
+            "Semester": {
+              "S": "Spring"
+            },
+            "Year": {
+              "N": "2022"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CIS"
+            },
+            "CourseNumber": {
+              "N": "1998"
+            },
+            "Grade": {
+              "N": "2.89"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2022"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ENGL"
+            },
+            "CourseNumber": {
+              "N": "1468"
+            },
+            "Grade": {
+              "N": "2.47"
+            },
+            "Semester": {
+              "S": "Spring"
+            },
+            "Year": {
+              "N": "2022"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "HIST"
+            },
+            "CourseNumber": {
+              "N": "1929"
+            },
+            "Grade": {
+              "N": "2.31"
+            },
+            "Semester": {
+              "S": "Spring"
+            },
+            "Year": {
+              "N": "2021"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ART"
+            },
+            "CourseNumber": {
+              "N": "2131"
+            },
+            "Grade": {
+              "N": "3.07"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2021"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ENGL"
+            },
+            "CourseNumber": {
+              "N": "3891"
+            },
+            "Grade": {
+              "N": "2.58"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2024"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CHEM"
+            },
+            "CourseNumber": {
+              "N": "2277"
+            },
+            "Grade": {
+              "N": "3.34"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2023"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "PSYC"
+            },
+            "CourseNumber": {
+              "N": "2709"
+            },
+            "Grade": {
+              "N": "3.19"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2024"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CHEM"
+            },
+            "CourseNumber": {
+              "N": "4196"
+            },
+            "Grade": {
+              "N": "3.53"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2024"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ENGL"
+            },
+            "CourseNumber": {
+              "N": "2755"
+            },
+            "Grade": {
+              "N": "2.13"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2021"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CIS"
+            },
+            "CourseNumber": {
+              "N": "1788"
+            },
+            "Grade": {
+              "N": "2.54"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2023"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ENGL"
+            },
+            "CourseNumber": {
+              "N": "3672"
+            },
+            "Grade": {
+              "N": "2.49"
+            },
+            "Semester": {
+              "S": "Spring"
+            },
+            "Year": {
+              "N": "2024"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "MATH"
+            },
+            "CourseNumber": {
+              "N": "1384"
+            },
+            "Grade": {
+              "N": "2.36"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2022"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CIS"
+            },
+            "CourseNumber": {
+              "N": "3037"
+            },
+            "Grade": {
+              "N": "3.6"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2021"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "MATH"
+            },
+            "CourseNumber": {
+              "N": "2588"
+            },
+            "Grade": {
+              "N": "2.75"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2023"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "BIOL"
+            },
+            "CourseNumber": {
+              "N": "3717"
+            },
+            "Grade": {
+              "N": "3.74"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2021"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CHEM"
+            },
+            "CourseNumber": {
+              "N": "1256"
+            },
+            "Grade": {
+              "N": "2.7"
+            },
+            "Semester": {
+              "S": "Fall"
+            },
+            "Year": {
+              "N": "2024"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ART"
+            },
+            "CourseNumber": {
+              "N": "3216"
+            },
+            "Grade": {
+              "N": "3.57"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2021"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "CHEM"
+            },
+            "CourseNumber": {
+              "N": "2559"
+            },
+            "Grade": {
+              "N": "3.94"
+            },
+            "Semester": {
+              "S": "Summer"
+            },
+            "Year": {
+              "N": "2023"
+            }
+          }
+        }
+      ]
+    },
+    "Overrides": {
+      "L": []
+    },
+    "CurrentSchedule": {
+      "L": [
+        {
+          "M": {
+            "Subject": {
+              "S": "MATH"
+            },
+            "CourseNumber": {
+              "N": "2528"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "HIST"
+            },
+            "CourseNumber": {
+              "N": "4165"
+            }
+          }
+        },
+        {
+          "M": {
+            "Subject": {
+              "S": "ART"
+            },
+            "CourseNumber": {
+              "N": "4174"
+            }
+          }
+        }
+      ]
+    },
+    "GraduationPlan": {
+      "M": {
+        "Fall2025": {
+          "L": [
+            {
+              "M": {
+                "Subject": {
+                  "S": "ENGL"
+                },
+                "CourseNumber": {
+                  "N": "3336"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "ART"
+                },
+                "CourseNumber": {
+                  "N": "1243"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "CHEM"
+                },
+                "CourseNumber": {
+                  "N": "4824"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "BIOL"
+                },
+                "CourseNumber": {
+                  "N": "4178"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "ENGL"
+                },
+                "CourseNumber": {
+                  "N": "3326"
+                }
+              }
+            }
+          ]
+        },
+        "Spring2025": {
+          "L": [
+            {
+              "M": {
+                "Subject": {
+                  "S": "MATH"
+                },
+                "CourseNumber": {
+                  "N": "4765"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "ENGL"
+                },
+                "CourseNumber": {
+                  "N": "4484"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "ART"
+                },
+                "CourseNumber": {
+                  "N": "4641"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "HIST"
+                },
+                "CourseNumber": {
+                  "N": "2828"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "BIOL"
+                },
+                "CourseNumber": {
+                  "N": "3090"
+                }
+              }
+            }
+          ]
+        },
+        "Fall2024": {
+          "L": [
+            {
+              "M": {
+                "Subject": {
+                  "S": "ART"
+                },
+                "CourseNumber": {
+                  "N": "2139"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "BIOL"
+                },
+                "CourseNumber": {
+                  "N": "3573"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "ART"
+                },
+                "CourseNumber": {
+                  "N": "2911"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "ART"
+                },
+                "CourseNumber": {
+                  "N": "3644"
+                }
+              }
+            },
+            {
+              "M": {
+                "Subject": {
+                  "S": "ART"
+                },
+                "CourseNumber": {
+                  "N": "3848"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+]

@@ -65,3 +65,40 @@ export const deleteRule = (majorCode, requirementType) => {
 export const fetchAllMajorCodes = () => {
   return apiRequest(`${API_BASE_URL}/rules/majors/all`);
 };
+
+/**
+ * Fetches a single student by their ID.
+ * @param {string} studentId - The ID of the student to fetch.
+ * @returns {Promise<object>} A promise that resolves to the student object.
+ */
+export const fetchStudentById = (studentId) => {
+  return apiRequest(`${API_BASE_URL}/students/${studentId}`);
+};
+
+/**
+ * Adds a new override to a student's record.
+ * @param {string} studentId - The ID of the student.
+ * @param {object} overrideData - The override object to add.
+ * @returns {Promise<object>} The server's confirmation response.
+ */
+export const addStudentOverride = (studentId, overrideData) => {
+  return apiRequest(`${API_BASE_URL}/students/${studentId}/overrides`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(overrideData),
+  });
+};
+
+/**
+ * Deletes a specific override from a student's record.
+ * @param {string} studentId - The ID of the student.
+ * @param {number} overrideIndex - The index of the override to delete.
+ * @returns {Promise<object>} The server's confirmation response.
+ */
+export const deleteStudentOverride = (studentId, overrideIndex) => {
+  return apiRequest(`${API_BASE_URL}/students/${studentId}/overrides/${overrideIndex}`, {
+    method: 'DELETE',
+  });
+};

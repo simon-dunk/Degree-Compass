@@ -5,7 +5,7 @@
 const studentTableSchema = {
   TableName: 'StudentDatabase',
   KeySchema: [
-    { AttributeName: 'StudentId', KeyType: 'HASH' }
+    { AttributeName: 'StudentId', KeyType: 'N' }
   ],
   AttributeDefinitions: [
     { AttributeName: 'StudentId', AttributeType: 'S' },
@@ -16,14 +16,14 @@ const studentTableSchema = {
     {
       IndexName: 'MajorIndex',
       KeySchema: [
-        { AttributeName: 'Major', KeyType: 'HASH' }
+        { AttributeName: 'Major', KeyType: 'S' }
       ],
       Projection: { ProjectionType: 'ALL' }
     },
     {
       IndexName: 'GraduationYearIndex',
       KeySchema: [
-        { AttributeName: 'GraduationYear', KeyType: 'HASH' }
+        { AttributeName: 'GraduationYear', KeyType: 'N' }
       ],
       Projection: { ProjectionType: 'ALL' }
     }
