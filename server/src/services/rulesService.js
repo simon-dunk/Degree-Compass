@@ -1,12 +1,9 @@
-import { QueryCommand, PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { QueryCommand, PutCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'; // <-- FIXED: Added ScanCommand
 import { docClient } from '../config/db.js';
-import fs from 'fs'; // Import the built-in Node.js file system module
-import path from 'path'; // Import the path module to handle file paths reliably
+import fs from 'fs';
+import path from 'path';
 
-// Construct an absolute path to the config file
-// This is more robust than a relative path
 const configPath = path.resolve(process.cwd(), 'src/config/config.json');
-// Read the config file synchronously and parse it
 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
 const tableName = config.db_tables.degree_reqs;
@@ -75,5 +72,25 @@ export const deleteRule = async (majorCode, requirementType) => {
   } catch (error) {
     console.error('DynamoDB Error deleting rule:', error);
     throw new Error('Could not delete rule from database.');
+  }
+};
+
+/**
+ * Scans the DegreeRequirements table to get a list of all unique MajorCodes.
+ * @returns {Promise<string[]>} A promise that resolves to an array of unique major codes.
+ */
+export const getAllMajors = async () => {
+  const params = {
+    TableName: tableName,
+    ProjectionExpression: 'MajorCode',
+  };
+  try {
+    const command = new ScanCommand(params);
+    const { Items } = await docClient.send(command);
+    const uniqueMajors = [...new Set(Items.map(item => item.MajorCode))];
+    return uniqueMajors.sort();
+  } catch (error) {
+    console.error('DynamoDB Error getting all majors:', error);
+    throw new Error('Could not fetch list of majors from database.');
   }
 };

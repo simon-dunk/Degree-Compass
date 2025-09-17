@@ -1,12 +1,15 @@
 import express from 'express';
+import cors from 'cors';
 import rulesRouter from './api/routes/rules.routes.js';
 
 // Initialize the Express app
 const app = express();
 
-// Middleware to parse JSON bodies from incoming requests
+// --- MIDDLEWARE ---
+app.use(cors()); // <-- 2. USE CORS MIDDLEWARE
 app.use(express.json());
 
+// --- ROUTES ---
 // Mount the rules router to the /api/rules path
 app.use('/api/rules', rulesRouter);
 

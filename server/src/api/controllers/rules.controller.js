@@ -58,3 +58,17 @@ export const deleteDegreeRule = async (req, res) => {
     res.status(500).json({ message: 'Server error deleting rule.', error: error.message });
   }
 };
+
+/**
+ * @desc    Get a list of all unique major codes
+ * @route   GET /api/rules/majors/all
+ * @access  Private (Admin)
+ */
+export const getAllMajorCodes = async (req, res) => {
+  try {
+    const majors = await rulesService.getAllMajors();
+    res.status(200).json(majors);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error fetching major codes.', error: error.message });
+  }
+};
