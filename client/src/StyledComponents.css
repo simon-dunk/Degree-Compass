@@ -1,0 +1,41 @@
+/* --- Styled Input Fields --- */
+.styled-input, .styled-select {
+    padding: 1rem;
+    border: 1px solid #cccccc; /* From StyleGuide */
+    border-radius: 5px;
+    font-size: 1rem;
+    color: #555555; /* From StyleGuide */
+    background-color: white;
+    width: 100%;
+    box-sizing: border-box; /* Important for consistent sizing */
+}
+
+.styled-input:focus, .styled-select:focus {
+    border-color: #005826; /* --primary-color */
+    box-shadow: 0 0 0 3px rgba(97, 192, 92, 0.5); /* --root-focus-color */
+    outline: none;
+}
+
+/* --- Styled Select (Dropdown) Specifics --- */
+.styled-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.styled-select {
+    appearance: none; /* Removes default browser arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.styled-select-wrapper::after {
+    content: '▼';
+    font-size: 1rem;
+    color: #555;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* Allows clicks to pass through to the select */
+}

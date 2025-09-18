@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { upsertItem } from '../api/devToolsApi';
 import CourseSelector from './CourseSelector';
+import StyledInput from './StyledInput';
 
-const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }) => { // 1. Accept onClear prop
+const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }) => {
   const [formData, setFormData] = useState({});
   const [formMode, setFormMode] = useState('add');
 
@@ -65,29 +66,29 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
       case 'StudentDatabase':
         return (
           <>
-            <input name="StudentId" style={styles.input} value={formData.StudentId || ''} onChange={handleInputChange} placeholder="Student ID" disabled={formMode === 'edit'} />
-            <input name="FirstName" style={styles.input} value={formData.FirstName || ''} onChange={handleInputChange} placeholder="First Name" />
-            <input name="LastName" style={styles.input} value={formData.LastName || ''} onChange={handleInputChange} placeholder="Last Name" />
-            <input name="Major" style={styles.input} value={formData.Major || ''} onChange={handleInputChange} placeholder="Major (e.g., CIS)" />
+            {/* 2. Use the new StyledInput component */}
+            <StyledInput name="StudentId" value={formData.StudentId || ''} onChange={handleInputChange} placeholder="Student ID" disabled={formMode === 'edit'} />
+            <StyledInput name="FirstName" value={formData.FirstName || ''} onChange={handleInputChange} placeholder="First Name" />
+            <StyledInput name="LastName" value={formData.LastName || ''} onChange={handleInputChange} placeholder="Last Name" />
+            <StyledInput name="Major" value={formData.Major || ''} onChange={handleInputChange} placeholder="Majors (comma-separated)" />
           </>
         );
       case 'CourseDatabase':
         return (
           <>
-            <input name="Subject" style={styles.input} value={formData.Subject || ''} onChange={handleInputChange} placeholder="Subject" />
-            <input name="CourseNumber" style={styles.input} value={formData.CourseNumber || ''} onChange={handleInputChange} placeholder="Course Number" />
-            <input name="Name" style={styles.input} value={formData.Name || ''} onChange={handleInputChange} placeholder="Course Name" />
-            <input name="Credits" style={styles.input} value={formData.Credits || ''} onChange={handleInputChange} placeholder="Credits" />
+            <StyledInput name="Subject" value={formData.Subject || ''} onChange={handleInputChange} placeholder="Subject" />
+            <StyledInput name="CourseNumber" value={formData.CourseNumber || ''} onChange={handleInputChange} placeholder="Course Number" />
+            <StyledInput name="Name" value={formData.Name || ''} onChange={handleInputChange} placeholder="Course Name" />
+            <StyledInput name="Credits" value={formData.Credits || ''} onChange={handleInputChange} placeholder="Credits" />
           </>
         );
       case 'DegreeRequirements':
         return (
             <>
-                <input name="MajorCode" style={styles.input} value={formData.MajorCode || ''} onChange={handleInputChange} placeholder="Major Code" />
-                <input name="RequirementType" style={styles.input} value={formData.RequirementType || ''} onChange={handleInputChange} placeholder="Requirement Type" />
-                {/* 2. Replace textarea with CourseSelector */}
+                <StyledInput name="MajorCode" value={formData.MajorCode || ''} onChange={handleInputChange} placeholder="Major Code" />
+                <StyledInput name="RequirementType" value={formData.RequirementType || ''} onChange={handleInputChange} placeholder="Requirement Type" />
                 <CourseSelector selectedCourses={formData.Courses || []} onChange={handleCoursesChange} />
-                <input name="MinCredits" style={styles.input} value={formData.MinCredits || ''} onChange={handleInputChange} placeholder="Minimum Credits" />
+                <StyledInput name="MinCredits" value={formData.MinCredits || ''} onChange={handleInputChange} placeholder="Minimum Credits" />
             </>
         );
       default:
@@ -101,7 +102,6 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
         {renderFormFields()}
       </div>
       <div style={styles.buttonContainer}>
-          {/* 2. Use the onClear prop here */}
           <button type="button" onClick={onClear} style={styles.clearButton}>Clear / New Item</button>
           <button type="submit" style={styles.button}>{formMode === 'add' ? 'Add New Item' : 'Update Item'}</button>
       </div>
@@ -113,15 +113,6 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
 const styles = {
     form: { display: 'flex', flexDirection: 'column', gap: '1rem' },
     fieldGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' },
-    input: {
-        padding: '1rem', border: '1px solid #cccccc',
-        borderRadius: '5px', fontSize: '1rem',
-    },
-    textarea: {
-        padding: '1rem', border: '1px solid #cccccc',
-        borderRadius: '5px', fontSize: '1rem', fontFamily: 'monospace',
-        gridColumn: '1 / -1' // Span full width
-    },
     buttonContainer: { display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' },
     button: {
         backgroundColor: '#005826', color: 'white', padding: '10px 20px', border: 'none',

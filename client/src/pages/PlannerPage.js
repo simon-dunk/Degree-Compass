@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAuditReport, fetchAllStudents, generatePlan } from '../api/api';
+import StyledSelect from '../components/StyledSelect';
 
 const PlannerPage = () => {
   const [auditReport, setAuditReport] = useState(null);
@@ -86,7 +87,7 @@ const PlannerPage = () => {
       <h1>Degree Planner</h1>
       <div style={styles.selectionContainer}>
         <label htmlFor="student-select" style={styles.label}>Select Student:</label>
-        <select
+        <StyledSelect
           id="student-select"
           value={selectedStudentId}
           onChange={(e) => setSelectedStudentId(e.target.value)}
@@ -98,7 +99,7 @@ const PlannerPage = () => {
               {student.LastName}, {student.FirstName} ({student.StudentId})
             </option>
           ))}
-        </select>
+        </StyledSelect>
       </div>
 
       {isLoading && <p>Loading...</p>}
