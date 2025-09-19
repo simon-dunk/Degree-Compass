@@ -4,9 +4,9 @@ import StyledStudentTable from '../components/StyledStudentTable';
 import StyledDegreeRequirementsTable from '../components/StyledDegreeRequirementsTable';
 import Modal from '../components/Modal';
 import StyledDegreeRequirementDetails from '../components/StyledDegreeRequirementDetails';
-import { fetchTableContents, deleteItem } from '../api/devToolsApi';
-import ItemEditorForm from '../components/ItemEditorForm';
 import StyledStudentDetails from '../components/StyledStudentDetails';
+import ItemEditorForm from '../components/ItemEditorForm';
+import { fetchTableContents, deleteItem, generateMassData } from '../api/devToolsApi';
 
 const TABLE_NAMES = ['CourseDatabase', 'StudentDatabase', 'DegreeRequirements'];
 
@@ -16,9 +16,8 @@ const DevToolsPage = () => {
   const [viewMode, setViewMode] = useState('styled');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null); 
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  // State for the Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState(null);
   const [modalTitle, setModalTitle] = useState('');
@@ -46,10 +45,22 @@ const DevToolsPage = () => {
       setSelectedItem(null);
   }, [activeTab]);
 
+  const handleGenerateData = async () => {
+      if (window.confirm('This will overwrite existing data in the Course and Degree Requirements tables. Are you sure?')) {
+          try {
+            const result = await generateMassData();
+            alert(result.message);
+            loadTableData(); // Refresh the current tab
+          } catch (err) {
+              alert(`Error generating data: ${err.message}`);
+          }
+      }
+  };
+  
   const handleViewDetails = (title, content) => {
     setModalTitle(title);
     setModalContent(content);
-    setModalViewMode('styled'); // Always default to styled view when opening
+    setModalViewMode('styled');
     setIsModalOpen(true);
   };
 
@@ -133,11 +144,17 @@ const DevToolsPage = () => {
       <h1>Developer Dashboard</h1>
       <p>A tool for direct database manipulation and data simulation.</p>
 
-      {/* The `generateMassData` card could go here */}
+      {/* --- THIS IS THE MISSING SECTION --- */}
+      <div style={styles.card}>
+          <h2>Data Simulation</h2>
+          <p>Generate a large, realistic set of courses and degree requirements for a full CS program.</p>
+          <button onClick={handleGenerateData} style={styles.button}>Generate Full CS Program Data</button>
+      </div>
+      {/* --- END OF MISSING SECTION --- */}
 
       <div style={styles.card}>
           <div style={styles.header}>
-            <h2>Database Viewer</h2>
+            <h2>Database Viewer & Editor</h2>
             <div style={styles.toggleContainer}>
                 <button onClick={() => setViewMode('styled')} style={viewMode === 'styled' ? styles.toggleActive : styles.toggle}>Styled</button>
                 <button onClick={() => setViewMode('json')} style={viewMode === 'json' ? styles.toggleActive : styles.toggle}>JSON</button>
@@ -162,9 +179,10 @@ const DevToolsPage = () => {
           <ItemEditorForm 
             activeTable={activeTab}
             selectedItem={selectedItem}
+            onClear={() => setSelectedItem(null)}
             onActionComplete={() => {
-                setSelectedItem(null); // Clear selection after action
-                loadTableData();      // Refresh table data
+                setSelectedItem(null);
+                loadTableData();
             }}
           />
       </div>

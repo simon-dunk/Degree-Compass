@@ -1,4 +1,5 @@
 import * as devToolsService from '../../services/devToolsService.js';
+import { generateFullDegreeProgram } from '../../services/massDataService.js';
 
 export const getTable = async (req, res) => {
   try {
@@ -38,7 +39,7 @@ export const removeItem = async (req, res) => {
 
 export const generateData = async (req, res) => {
     try {
-        const result = await devToolsService.generateMassiveData();
+        const result = await generateFullDegreeProgram();
         res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });

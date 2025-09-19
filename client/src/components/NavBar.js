@@ -1,11 +1,13 @@
 import React from 'react';
 
 const NavBar = ({ currentPage, setCurrentPage }) => {
-  const pages = ['planner', 'rules', 'overrides', 'dev'];
+  // 1. Add 'schedule' to the list of pages
+  const pages = ['planner', 'schedule', 'rules', 'overrides', 'dev'];
 
   const getPageName = (pageId) => {
     switch (pageId) {
       case 'planner': return 'Student Planner';
+      case 'schedule': return 'Schedule Builder'; // 2. Add the display name
       case 'rules': return 'Rules Admin';
       case 'overrides': return 'Overrides Admin';
       case 'dev': return 'Developer Tools';

@@ -5,6 +5,9 @@ const CourseSelector = ({ selectedCourses, onChange }) => {
   const [allCourses, setAllCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
 
+  // --- FIX: Ensure selectedCourses is always an array ---
+  const currentCourses = Array.isArray(selectedCourses) ? selectedCourses : [];
+
   useEffect(() => {
     const loadCourses = async () => {
       const courses = await fetchAllCourses();
@@ -16,13 +19,14 @@ const CourseSelector = ({ selectedCourses, onChange }) => {
   const handleAddCourse = () => {
     if (!selectedCourseId) return;
     const courseToAdd = allCourses.find(c => `${c.Subject}-${c.CourseNumber}` === selectedCourseId);
-    if (courseToAdd && !selectedCourses.some(sc => sc.Subject === courseToAdd.Subject && sc.CourseNumber === courseToAdd.CourseNumber)) {
-      onChange([...selectedCourses, { Subject: courseToAdd.Subject, CourseNumber: courseToAdd.CourseNumber }]);
+    // Prevent adding duplicates
+    if (courseToAdd && !currentCourses.some(sc => sc.Subject === courseToAdd.Subject && sc.CourseNumber === courseToAdd.CourseNumber)) {
+      onChange([...currentCourses, { Subject: courseToAdd.Subject, CourseNumber: courseToAdd.CourseNumber }]);
     }
   };
 
   const handleRemoveCourse = (courseToRemove) => {
-    onChange(selectedCourses.filter(c => !(c.Subject === courseToRemove.Subject && c.CourseNumber === courseToRemove.CourseNumber)));
+    onChange(currentCourses.filter(c => !(c.Subject === courseToRemove.Subject && c.CourseNumber === courseToRemove.CourseNumber)));
   };
 
   return (
@@ -39,7 +43,8 @@ const CourseSelector = ({ selectedCourses, onChange }) => {
         <button type="button" onClick={handleAddCourse} style={styles.button}>Add</button>
       </div>
       <div style={styles.selectedList}>
-        {selectedCourses.map((course, index) => (
+        {/* Use the safe currentCourses array for mapping */}
+        {currentCourses.map((course, index) => (
           <div key={index} style={styles.chip}>
             {course.Subject} {course.CourseNumber}
             <button type="button" onClick={() => handleRemoveCourse(course)} style={styles.removeButton}>&times;</button>
@@ -59,7 +64,7 @@ const styles = {
         backgroundColor: '#005826', color: 'white', padding: '10px 20px', border: 'none',
         borderRadius: '5px', cursor: 'pointer', fontSize: '1rem'
     },
-    selectedList: { display: 'flex', flexWrap: 'wrap', gap: '10px' },
+    selectedList: { display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '40px' },
     chip: {
         display: 'flex', alignItems: 'center', backgroundColor: '#e9ecef',
         padding: '5px 10px', borderRadius: '15px'
