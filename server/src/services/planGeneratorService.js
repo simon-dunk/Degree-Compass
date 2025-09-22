@@ -3,7 +3,82 @@ import { getCourseByKey } from './coursesService.js';
 
 const MAX_CREDITS_PER_SEMESTER = 15;
 
-// Helper function to check if prerequisites are met
+/**
+ * Generates a single, optimal semester.
+ * @param {string} studentId - The ID of the student.
+ * @param {Array<object>} [pinnedCourses=[]] - Courses the user wants in this semester.
+ * @param {Array<object>} [previouslyPlannedCourses=[]] - All courses taken or locked in previous semesters.
+ * @returns {Promise<object|null>} A promise that resolves to a single semester object or null.
+ */
+export const generateNextSemesterPlan = async (studentId, pinnedCourses = [], previouslyPlannedCourses = []) => {
+  const audit = await runDegreeAudit(studentId);
+
+  // Combine student's actual completed courses with previously planned ones for a full history
+  const simulatedCompletedCourses = [
+    ...(audit.studentCompletedCourses || []),
+    ...previouslyPlannedCourses,
+  ];
+
+  let remainingCourses = audit.results
+    .flatMap(r => r.coursesStillNeeded)
+    .filter(neededCourse => 
+        !previouslyPlannedCourses.some(planned => 
+            planned.Subject === neededCourse.Subject && planned.CourseNumber === neededCourse.CourseNumber
+        )
+    );
+  
+  if (remainingCourses.length === 0) {
+    return null; // No more courses to plan
+  }
+
+  let currentSemesterCredits = 0;
+  const currentSemesterCourses = [];
+
+  // 1. Handle Pinned Courses first
+  if (pinnedCourses.length > 0) {
+    for (const pinned of pinnedCourses) {
+      const details = await getCourseByKey(pinned.Subject, pinned.CourseNumber);
+      if (!details) throw new Error(`Pinned course ${pinned.Subject} ${pinned.CourseNumber} not found.`);
+
+      const canTake = arePrerequisitesMet(details.Prerequisites, simulatedCompletedCourses);
+      if (canTake && (currentSemesterCredits + (details.Credits || 3) <= MAX_CREDITS_PER_SEMESTER)) {
+        currentSemesterCourses.push(details);
+        currentSemesterCredits += (details.Credits || 3);
+      } else {
+        throw new Error(`Cannot schedule pinned course ${details.Subject} ${details.CourseNumber}. Prerequisites not met or credit limit exceeded.`);
+      }
+    }
+  }
+
+  // 2. Fill the rest of the semester
+  const courseDetailsPromises = remainingCourses.map(course => getCourseByKey(course.Subject, course.CourseNumber));
+  const allCourseDetails = await Promise.all(courseDetailsPromises);
+
+  const eligibleNow = allCourseDetails.filter(details => {
+    if (!details) return false;
+    // Ensure it's not already in the semester from pinning
+    const isAlreadyPinned = currentSemesterCourses.some(c => c.Subject === details.Subject && c.CourseNumber === details.CourseNumber);
+    if (isAlreadyPinned) return false;
+    
+    // Check prerequisites against all previously completed/planned courses
+    return arePrerequisitesMet(details.Prerequisites, simulatedCompletedCourses);
+  });
+
+  for (const course of eligibleNow) {
+    if (currentSemesterCredits + (course.Credits || 3) <= MAX_CREDITS_PER_SEMESTER) {
+      currentSemesterCourses.push(course);
+      currentSemesterCredits += (course.Credits || 3);
+    }
+  }
+
+  if (currentSemesterCourses.length === 0) {
+      return null;
+  }
+  
+  return { courses: currentSemesterCourses, totalCredits: currentSemesterCredits };
+};
+
+// Helper function (no changes)
 const arePrerequisitesMet = (prerequisites, completedCourses) => {
     if (!prerequisites || prerequisites.length === 0) return true;
     return prerequisites.every(prereq => 
@@ -11,89 +86,4 @@ const arePrerequisitesMet = (prerequisites, completedCourses) => {
             completed.Subject === prereq.Subject && completed.CourseNumber === prereq.CourseNumber
         )
     );
-};
-
-/**
- * The main path generation algorithm.
- * @param {string} studentId - The ID of the student.
- * @param {Array<object>} [pinnedCourses=[]] - An optional array of courses the user wants to prioritize.
- * @param {number} [numSemesters=8] - The desired length of the plan in semesters.
- * @returns {Promise<Array<object>>} A promise that resolves to a semester-by-semester plan.
- */
-export const generateDegreePlan = async (studentId, pinnedCourses = [], numSemesters = 8) => {
-  const initialAudit = await runDegreeAudit(studentId);
-  
-  let remainingCourses = initialAudit.results
-    .flatMap(r => r.coursesStillNeeded)
-    .filter((course, index, self) => 
-      index === self.findIndex(c => 
-        c.Subject === course.Subject && c.CourseNumber === course.CourseNumber
-      )
-    );
-
-  let simulatedCompletedCourses = [...(initialAudit.studentCompletedCourses || [])];
-  const generatedPlan = [];
-  let semesterCount = 1;
-
-  // --- LOGIC FOR PINNED COURSES ---
-  // (This is a placeholder for future implementation; for now, it doesn't affect the logic)
-  if (pinnedCourses.length > 0) {
-    console.log('Pinned courses received:', pinnedCourses);
-  }
-
-  // --- Main Generation Loop ---
-  while (remainingCourses.length > 0 && semesterCount <= numSemesters) {
-    let currentSemesterCredits = 0;
-    const currentSemesterCourses = [];
-
-    const courseDetailsPromises = remainingCourses.map(course => getCourseByKey(course.Subject, course.CourseNumber));
-    const remainingCourseDetails = await Promise.all(courseDetailsPromises);
-
-    const eligibleNow = remainingCourseDetails.filter(details => 
-        details && arePrerequisitesMet(details.Prerequisites, simulatedCompletedCourses)
-    );
-    
-    for (const course of eligibleNow) {
-        if (currentSemesterCredits + (course.Credits || 3) <= MAX_CREDITS_PER_SEMESTER) {
-            currentSemesterCourses.push(course);
-            currentSemesterCredits += (course.Credits || 3);
-        }
-    }
-
-    if (currentSemesterCourses.length === 0 && remainingCourses.length > 0) {
-        console.error("No eligible courses could be found, breaking to prevent infinite loop.");
-        break;
-    }
-
-    if (currentSemesterCourses.length > 0) {
-        generatedPlan.push({
-            semester: `Semester ${semesterCount}`,
-            courses: currentSemesterCourses,
-            totalCredits: currentSemesterCredits,
-        });
-
-        simulatedCompletedCourses.push(...currentSemesterCourses);
-        remainingCourses = remainingCourses.filter(remCourse => 
-            !currentSemesterCourses.some(planCourse => 
-                planCourse.Subject === remCourse.Subject && planCourse.CourseNumber === remCourse.CourseNumber
-            )
-        );
-
-        semesterCount++;
-    } else {
-        // If no courses could be scheduled, break the loop to avoid an empty semester
-        break;
-    }
-  }
-
-  // Add any leftover courses to an "Unscheduled" list
-  if (remainingCourses.length > 0) {
-      generatedPlan.push({
-          semester: 'Unscheduled',
-          courses: remainingCourses,
-          totalCredits: remainingCourses.reduce((sum, course) => sum + (course.Credits || 3), 0)
-      });
-  }
-
-  return generatedPlan;
 };

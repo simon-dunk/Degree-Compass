@@ -1,9 +1,9 @@
 import express from 'express';
-import { getGeneratedPlan } from '../controllers/planner.controller.js';
+import { getGeneratedSemester } from '../controllers/planner.controller.js';
 
 const router = express.Router();
 
-// POST to generate a new plan
-router.post('/generate/:studentId', getGeneratedPlan);
+// POST to generate a new plan for the next semester
+router.post('/generate-semester', getGeneratedSemester);
 
 export default router;

@@ -1,20 +1,16 @@
-import { generateDegreePlan } from '../../services/planGeneratorService.js';
+import { generateNextSemesterPlan } from '../../services/planGeneratorService.js';
 
 /**
- * @desc    Generate a degree plan for a student
- * @route   POST /api/planner/generate/:studentId
+ * @desc    Generate the next optimal semester for a student
+ * @route   POST /api/planner/generate-semester
  * @access  Public
  */
-
-export const getGeneratedPlan = async (req, res) => {
+export const getGeneratedSemester = async (req, res) => {
   try {
-    const { studentId } = req.params;
-    // Get both pinnedCourses and numSemesters from the body
-    const { pinnedCourses, numSemesters } = req.body; 
-
-    const plan = await generateDegreePlan(studentId, pinnedCourses, numSemesters);
-    res.status(200).json(plan);
+    const { studentId, pinnedCourses, previouslyPlannedCourses } = req.body;
+    const semester = await generateNextSemesterPlan(studentId, pinnedCourses, previouslyPlannedCourses);
+    res.status(200).json(semester);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to generate plan.', error: error.message });
+    res.status(500).json({ message: 'Failed to generate semester.', error: error.message });
   }
 };

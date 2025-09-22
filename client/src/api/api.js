@@ -155,3 +155,20 @@ export const addCompletedCourse = (studentId, courseData) => {
   });
 };
 
+// --- NEW API FUNCTION ---
+/**
+ * Requests the next optimal semester for a student's plan.
+ * @param {string} studentId - The ID of the student.
+ * @param {Array<object>} pinnedCourses - List of courses to prioritize for this semester.
+ * @param {Array<object>} previouslyPlannedCourses - List of all courses already completed or locked into the plan.
+ * @returns {Promise<object>} A promise that resolves to the single generated semester object.
+ */
+export const generateNextSemester = (studentId, pinnedCourses = [], previouslyPlannedCourses = []) => {
+    return apiRequest(`${API_BASE_URL}/planner/generate-semester`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ studentId, pinnedCourses, previouslyPlannedCourses }),
+    });
+};
