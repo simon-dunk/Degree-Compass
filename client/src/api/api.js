@@ -137,6 +137,10 @@ export const generatePlan = (studentId, pinnedCourses = [], numSemesters = 8) =>
   });
 };
 
+export const fetchAllCourses = () => {
+  return apiRequest(`${API_BASE_URL}/courses`);
+};
+
 /**
  * Adds a completed course to a student's record.
  * @param {string} studentId - The ID of the student.
