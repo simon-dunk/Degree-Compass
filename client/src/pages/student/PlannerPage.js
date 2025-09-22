@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAuditReport, fetchAllStudents, generateNextSemester } from '../../api/api';
 import StyledSelect from '../../components/StyledSelect';
 
-// --- NEW: Client-side helper to check prerequisites ---
+// ... (helper function remains the same)
 const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
     if (!prerequisites || prerequisites.length === 0) return true;
     const completedIds = new Set(
@@ -16,6 +16,7 @@ const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
 
 
 const PlannerPage = () => {
+  // ... (existing state)
   const [auditReport, setAuditReport] = useState(null);
   const [lockedSemesters, setLockedSemesters] = useState([]);
   const [suggestedNextSemester, setSuggestedNextSemester] = useState(null);
@@ -26,12 +27,18 @@ const PlannerPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [remainingRequirements, setRemainingRequirements] = useState([]);
-  
-  // --- NEW: State for dynamically updated eligible courses ---
+  const [showCompletedCourses, setShowCompletedCourses] = useState(false);
   const [liveEligibleCourseIds, setLiveEligibleCourseIds] = useState(new Set());
-  
   const [editingSemesterIndex, setEditingSemesterIndex] = useState(null);
   const [editingSemesterName, setEditingSemesterName] = useState('');
+
+  // --- NEW: State for pinned electives ---
+  const [pinnedElectives, setPinnedElectives] = useState([]);
+
+  const selectedStudentInfo = React.useMemo(() => {
+    if (!selectedStudentId || students.length === 0) return null;
+    return students.find(s => s.StudentId === parseInt(selectedStudentId, 10));
+  }, [selectedStudentId, students]);
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -60,6 +67,8 @@ const PlannerPage = () => {
       setLockedSemesters([]);
       setSuggestedNextSemester(null);
       setPinnedCourses([]);
+      setPinnedElectives([]); // Reset electives on student change
+      setShowCompletedCourses(false); 
       const report = await fetchAuditReport(selectedStudentId);
       setAuditReport(report);
       setRemainingRequirements(report.results || []);
@@ -75,7 +84,6 @@ const PlannerPage = () => {
     loadAuditReport();
   }, [loadAuditReport]);
 
-  // --- REFACTORED: Combined useEffect for all plan-dependent calculations ---
   useEffect(() => {
     if (!auditReport) return;
 
@@ -88,7 +96,6 @@ const PlannerPage = () => {
       lockedSemesters.flatMap(sem => sem.courses.map(c => `${c.Subject}-${c.CourseNumber}`))
     );
 
-    // 1. Recalculate Remaining Requirements
     const updatedRequirements = auditReport.results.map(req => {
         const stillNeeded = req.coursesStillNeeded.filter(course => {
             const courseId = `${course.Subject}-${course.CourseNumber}`;
@@ -98,9 +105,9 @@ const PlannerPage = () => {
     });
     setRemainingRequirements(updatedRequirements);
 
-    // 2. Recalculate Eligibility for Pinning
     const newEligibleIds = new Set();
-    (auditReport.allRemainingCourses || []).forEach(course => {
+    // Check eligibility for both remaining required courses AND available electives
+    [...(auditReport.allRemainingCourses || []), ...(auditReport.availableElectives || [])].forEach(course => {
         if (arePrerequisitesMet(course.Prerequisites, allCompletedAndPlannedCourses)) {
             newEligibleIds.add(`${course.Subject}-${course.CourseNumber}`);
         }
@@ -114,11 +121,14 @@ const PlannerPage = () => {
     setIsGenerating(true);
     setError(null);
     try {
+      // --- COMBINE pinned courses and electives before sending ---
+      const allPinned = [...pinnedCourses, ...pinnedElectives];
       const allPreviouslyCompleted = [
         ...(auditReport.studentCompletedCourses || []),
         ...lockedSemesters.flatMap(sem => sem.courses)
       ];
-      const nextSemester = await generateNextSemester(selectedStudentId, pinnedCourses, allPreviouslyCompleted);
+      
+      const nextSemester = await generateNextSemester(selectedStudentId, allPinned, allPreviouslyCompleted);
       
       if (nextSemester && nextSemester.courses.length > 0) {
         setSuggestedNextSemester({
@@ -127,7 +137,7 @@ const PlannerPage = () => {
         });
       } else {
         setSuggestedNextSemester(null);
-        alert("Congratulations! All required courses have been planned.");
+        alert("All requirements planned. Consider adding more electives if needed.");
       }
 
     } catch (err) {
@@ -142,6 +152,7 @@ const PlannerPage = () => {
         setLockedSemesters([...lockedSemesters, suggestedNextSemester]);
         setSuggestedNextSemester(null);
         setPinnedCourses([]);
+        setPinnedElectives([]); // Clear pinned electives after locking
     }
   };
   
@@ -187,6 +198,18 @@ const PlannerPage = () => {
       }
     });
   };
+  
+  // --- NEW handler for pinning electives ---
+  const handleElectivePinToggle = (course) => {
+    setPinnedElectives(prevPinned => {
+      const isPinned = prevPinned.some(p => p.Subject === course.Subject && p.CourseNumber === course.CourseNumber);
+      if (isPinned) {
+        return prevPinned.filter(p => !(p.Subject === course.Subject && p.CourseNumber === course.CourseNumber));
+      } else {
+        return [...prevPinned, { Subject: course.Subject, CourseNumber: course.CourseNumber }];
+      }
+    });
+  };
 
   const plannedCourseIds = new Set(
     lockedSemesters.flatMap(sem => sem.courses.map(c => `${c.Subject}-${c.CourseNumber}`))
@@ -196,6 +219,13 @@ const PlannerPage = () => {
       const courseId = `${course.Subject}-${course.CourseNumber}`;
       return !plannedCourseIds.has(courseId);
   }) || [];
+  
+  // --- NEW list for available electives ---
+  const availableElectives = auditReport?.availableElectives.filter(course => {
+      const courseId = `${course.Subject}-${course.CourseNumber}`;
+      return !plannedCourseIds.has(courseId);
+  }) || [];
+
 
   return (
     <div style={styles.container}>
@@ -204,6 +234,26 @@ const PlannerPage = () => {
         <div style={styles.mainGrid}>
             
             <div style={styles.column}>
+                <h2>Academic History</h2>
+                {auditReport && (
+                    <button onClick={() => setShowCompletedCourses(!showCompletedCourses)} style={styles.toggleButton}>
+                        {showCompletedCourses ? 'Hide' : 'Show'} Completed Courses
+                    </button>
+                )}
+
+                {showCompletedCourses && auditReport?.studentCompletedCourses && (
+                    <div style={{...styles.card, marginBottom: '1rem'}}>
+                    <div style={styles.cardHeader}><h3>Completed Courses</h3></div>
+                    <ul style={{listStyle: 'none', padding: '0 1.5rem', maxHeight: '200px', overflowY: 'auto'}}>
+                        {auditReport.studentCompletedCourses.map((course, index) => (
+                        <li key={index} style={{padding: '0.5rem 0', borderBottom: '1px solid #eee'}}>
+                            {course.Subject} {course.CourseNumber} (Grade: {course.Grade})
+                        </li>
+                        ))}
+                    </ul>
+                    </div>
+                )}
+                
                 <h2>Remaining Requirements</h2>
                 {remainingRequirements.map((result) => (
                     <div key={result.requirementType} style={{...styles.card, marginBottom: '1rem'}}>
@@ -228,6 +278,12 @@ const PlannerPage = () => {
 
             <div style={styles.column}>
                 <h2>Graduation Plan</h2>
+                {selectedStudentInfo && auditReport && (
+                    <h3 style={styles.subHeader}>
+                        {selectedStudentInfo.FirstName} {selectedStudentInfo.LastName} | {auditReport.major}
+                    </h3>
+                )}
+
                 {lockedSemesters.length > 0 && (
                     <div style={styles.planResults}>
                         {lockedSemesters.map((semester, index) => (
@@ -300,17 +356,13 @@ const PlannerPage = () => {
                     </StyledSelect>
                 </div>
                 
-                {/* --- UPDATED PINNING SECTION --- */}
                 {pinnableCourses.length > 0 && (
                     <div style={styles.pinningSection}>
-                        <h4>Pin Courses for Next Semester</h4>
+                        <h4>Pin Required Courses</h4>
                         {pinnableCourses.map(course => {
                             const courseId = `${course.Subject}-${course.CourseNumber}`;
                             const isChecked = pinnedCourses.some(p => `${p.Subject}-${p.CourseNumber}` === courseId);
-                            // --- THIS IS THE FIX ---
-                            // Use the live, dynamically updated eligibility state
                             const isEligible = liveEligibleCourseIds.has(courseId);
-                            
                             const prereqText = (course.Prerequisites && course.Prerequisites.length > 0)
                                 ? `Prerequisites: ${course.Prerequisites.map(p => `${p.Subject} ${p.CourseNumber}`).join(', ')}`
                                 : 'No Prerequisites';
@@ -322,6 +374,35 @@ const PlannerPage = () => {
                                             type="checkbox"
                                             checked={isChecked}
                                             onChange={() => handlePinToggle(course)}
+                                            disabled={!isEligible}
+                                        />
+                                        {course.Subject} {course.CourseNumber} - {course.Name}
+                                    </label>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* --- NEW ELECTIVES SECTION --- */}
+                {availableElectives.length > 0 && (
+                    <div style={styles.pinningSection}>
+                        <h4>Select Electives</h4>
+                        {availableElectives.map(course => {
+                            const courseId = `${course.Subject}-${course.CourseNumber}`;
+                            const isChecked = pinnedElectives.some(p => `${p.Subject}-${p.CourseNumber}` === courseId);
+                            const isEligible = liveEligibleCourseIds.has(courseId);
+                            const prereqText = (course.Prerequisites && course.Prerequisites.length > 0)
+                                ? `Prerequisites: ${course.Prerequisites.map(p => `${p.Subject} ${p.CourseNumber}`).join(', ')}`
+                                : 'No Prerequisites';
+                            
+                            return (
+                                <div key={courseId} style={{...styles.pinItem, opacity: isEligible ? 1 : 0.6}}>
+                                    <label title={isEligible ? 'Eligible to take next semester' : prereqText}>
+                                        <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={() => handleElectivePinToggle(course)}
                                             disabled={!isEligible}
                                         />
                                         {course.Subject} {course.CourseNumber} - {course.Name}
@@ -362,6 +443,12 @@ const styles = {
         flexDirection: 'column',
         gap: '1rem'
     },
+    subHeader: {
+        margin: '-1rem 0 0 0',
+        color: '#555555',
+        fontWeight: 'normal',
+        fontSize: '1.2rem'
+    },
     selectionContainer: { marginBottom: '1rem', width: '100%' },
     label: { fontWeight: 'bold', marginRight: '10px', fontSize: '1.1rem' },
     card: {
@@ -392,6 +479,16 @@ const styles = {
     button: {
       padding: '12px 24px', fontSize: '1.1rem', cursor: 'pointer', border: 'none',
       borderRadius: '5px', backgroundColor: '#005826', color: 'white', flex: 1
+    },
+    toggleButton: {
+        width: '100%',
+        backgroundColor: 'transparent',
+        color: '#005826',
+        border: '2px solid #005826',
+        fontSize: '0.9rem',
+        padding: '8px 16px',
+        marginBottom: '1rem',
+        flex: 'none'
     },
     planResults: { width: '100%' },
     pinningSection: {

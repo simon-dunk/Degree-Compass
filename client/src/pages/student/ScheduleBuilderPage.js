@@ -6,7 +6,7 @@ import { formatTime12Hour } from '../../utils/formatters';
 
 const ScheduleBuilderPage = () => {
   const [scheduledEvents, setScheduledEvents] = useState([]); // Renamed for clarity
-  const [selectedColor] = useState('#005826');
+  const [selectedColor, setSelectedColor] = useState('#005826');
 
   const coursePool = [
     { Subject: 'CIS', CourseNumber: 4413, Name: 'Systems Analysis', Schedule: { Days: 'MWF', StartTime: '09:00', EndTime: '09:50' }, type: 'course' },
@@ -22,6 +22,7 @@ const ScheduleBuilderPage = () => {
 
     if (!isAlreadyScheduled) {
       const newEvent = { ...eventToAdd, color: selectedColor, id: eventId };
+      
       setScheduledEvents([...scheduledEvents, newEvent]);
     }
   };
@@ -38,6 +39,19 @@ const ScheduleBuilderPage = () => {
         <div style={styles.sidebar}>
             <h2>Course Pool</h2>
             {/* ... (Color picker and intro text) */}
+            <p>Select a color, then click a course to add it to the schedule.</p>
+
+            {/* --- New Color Picker Input --- */}
+            <div style={styles.colorPickerWrapper}>
+                <label htmlFor="color-picker">Event Color:</label>
+                <input 
+                    id="color-picker"
+                    type="color" 
+                    value={selectedColor} 
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    style={styles.colorPicker}
+                />
+            </div>
             <div style={styles.poolList}>
                 {coursePool.map(course => (
                     <div 

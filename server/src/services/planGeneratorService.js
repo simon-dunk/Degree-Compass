@@ -6,61 +6,58 @@ const MAX_CREDITS_PER_SEMESTER = 15;
 /**
  * Generates a single, optimal semester.
  * @param {string} studentId - The ID of the student.
- * @param {Array<object>} [pinnedCourses=[]] - Courses the user wants in this semester.
+ * @param {Array<object>} [pinnedCourses=[]] - Courses the user wants in this semester (can be required or elective).
  * @param {Array<object>} [previouslyPlannedCourses=[]] - All courses taken or locked in previous semesters.
  * @returns {Promise<object|null>} A promise that resolves to a single semester object or null.
  */
 export const generateNextSemesterPlan = async (studentId, pinnedCourses = [], previouslyPlannedCourses = []) => {
   const audit = await runDegreeAudit(studentId);
 
-  // Combine student's actual completed courses with previously planned ones for a full history
   const simulatedCompletedCourses = [
     ...(audit.studentCompletedCourses || []),
     ...previouslyPlannedCourses,
   ];
 
-  let remainingCourses = audit.results
-    .flatMap(r => r.coursesStillNeeded)
-    .filter(neededCourse => 
-        !previouslyPlannedCourses.some(planned => 
-            planned.Subject === neededCourse.Subject && planned.CourseNumber === neededCourse.CourseNumber
-        )
-    );
+  let remainingRequiredCourses = audit.allRemainingCourses.filter(neededCourse =>
+    !previouslyPlannedCourses.some(planned =>
+        planned.Subject === neededCourse.Subject && planned.CourseNumber === neededCourse.CourseNumber
+    )
+  );
   
-  if (remainingCourses.length === 0) {
-    return null; // No more courses to plan
+  // If there are no courses left to plan (required or pinned), we are done.
+  if (remainingRequiredCourses.length === 0 && pinnedCourses.length === 0) {
+    return null;
   }
 
   let currentSemesterCredits = 0;
   const currentSemesterCourses = [];
 
-  // 1. Handle Pinned Courses first
+  // 1. Handle ALL Pinned Courses first
   if (pinnedCourses.length > 0) {
     for (const pinned of pinnedCourses) {
       const details = await getCourseByKey(pinned.Subject, pinned.CourseNumber);
       if (!details) throw new Error(`Pinned course ${pinned.Subject} ${pinned.CourseNumber} not found.`);
 
       const canTake = arePrerequisitesMet(details.Prerequisites, simulatedCompletedCourses);
+
       if (canTake && (currentSemesterCredits + (details.Credits || 3) <= MAX_CREDITS_PER_SEMESTER)) {
         currentSemesterCourses.push(details);
         currentSemesterCredits += (details.Credits || 3);
+        simulatedCompletedCourses.push(details); // Add to simulated completed list immediately
       } else {
         throw new Error(`Cannot schedule pinned course ${details.Subject} ${details.CourseNumber}. Prerequisites not met or credit limit exceeded.`);
       }
     }
   }
 
-  // 2. Fill the rest of the semester
-  const courseDetailsPromises = remainingCourses.map(course => getCourseByKey(course.Subject, course.CourseNumber));
-  const allCourseDetails = await Promise.all(courseDetailsPromises);
+  // 2. Filter out any remaining courses that were already added via pinning
+  remainingRequiredCourses = remainingRequiredCourses.filter(rc =>
+      !currentSemesterCourses.some(csc => csc.Subject === rc.Subject && csc.CourseNumber === csc.CourseNumber)
+  );
 
-  const eligibleNow = allCourseDetails.filter(details => {
+  // 3. Fill the rest of the semester with eligible REQUIRED courses
+  const eligibleNow = remainingRequiredCourses.filter(details => {
     if (!details) return false;
-    // Ensure it's not already in the semester from pinning
-    const isAlreadyPinned = currentSemesterCourses.some(c => c.Subject === details.Subject && c.CourseNumber === details.CourseNumber);
-    if (isAlreadyPinned) return false;
-    
-    // Check prerequisites against all previously completed/planned courses
     return arePrerequisitesMet(details.Prerequisites, simulatedCompletedCourses);
   });
 
@@ -78,7 +75,7 @@ export const generateNextSemesterPlan = async (studentId, pinnedCourses = [], pr
   return { courses: currentSemesterCourses, totalCredits: currentSemesterCredits };
 };
 
-// Helper function (no changes)
+// Helper function
 const arePrerequisitesMet = (prerequisites, completedCourses) => {
     if (!prerequisites || prerequisites.length === 0) return true;
     return prerequisites.every(prereq => 
