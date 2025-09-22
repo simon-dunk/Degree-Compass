@@ -384,6 +384,15 @@ const PlannerPage = () => {
                     </div>
                 )}
 
+                <div style={styles.buttonGroup}>
+                    <button onClick={handleGenerateNextSemester} disabled={!auditReport || isGenerating} style={styles.button}>
+                        {isGenerating ? 'Generating...' : 'Generate Next Semester'}
+                    </button>
+                    <button onClick={() => { setLockedSemesters([]); setSuggestedNextSemester(null); }} style={{...styles.button, ...styles.resetButton}}>
+                        Reset Plan
+                    </button>
+                </div>
+
                 {/* --- NEW ELECTIVES SECTION --- */}
                 {availableElectives.length > 0 && (
                     <div style={styles.pinningSection}>
@@ -412,15 +421,6 @@ const PlannerPage = () => {
                         })}
                     </div>
                 )}
-                
-                <div style={styles.buttonGroup}>
-                    <button onClick={handleGenerateNextSemester} disabled={!auditReport || isGenerating} style={styles.button}>
-                        {isGenerating ? 'Generating...' : 'Generate Next Semester'}
-                    </button>
-                    <button onClick={() => { setLockedSemesters([]); setSuggestedNextSemester(null); }} style={{...styles.button, ...styles.resetButton}}>
-                        Reset Plan
-                    </button>
-                </div>
             </div>
         </div>
       )}
