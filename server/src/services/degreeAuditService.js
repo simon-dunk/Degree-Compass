@@ -1,13 +1,8 @@
 import { getStudentById } from './studentsService.js';
 import { getRulesByMajor } from './rulesService.js';
-import { getCourseByKey } from './coursesService.js';
+import { getCourseByKey, getCoursesByKeys } from './coursesService.js'; // Import getCoursesByKeys
 
-/**
- * Checks if a student has completed a specific course.
- * @param {object} course - The course to check for.
- * @param {Array<object>} completedCourses - The student's completed courses.
- * @returns {boolean} True if the course is in the completed list.
- */
+// ... (hasCompletedCourse and arePrerequisitesMet helpers remain the same)
 const hasCompletedCourse = (course, completedCourses) => {
   return completedCourses.some(completed =>
     completed.Subject === course.Subject &&
@@ -15,17 +10,10 @@ const hasCompletedCourse = (course, completedCourses) => {
   );
 };
 
-/**
- * Checks if a student has met all prerequisites for a given course.
- * @param {Array<object>} prerequisites - The list of prerequisite courses.
- * @param {Array<object>} completedCourses - The student's completed courses.
- * @returns {boolean} True if all prerequisites are met.
- */
 const arePrerequisitesMet = (prerequisites, completedCourses) => {
   if (!prerequisites || prerequisites.length === 0) {
-    return true; // No prerequisites, so they are met.
+    return true; 
   }
-  // Check if every course in the prerequisite list has been completed.
   return prerequisites.every(prereq => hasCompletedCourse(prereq, completedCourses));
 };
 
@@ -36,7 +24,6 @@ const arePrerequisitesMet = (prerequisites, completedCourses) => {
  * @returns {Promise<object>} A detailed audit report.
  */
 export const runDegreeAudit = async (studentId) => {
-  // 1. Fetch data and process overrides (no changes here)
   const student = await getStudentById(studentId);
   if (!student) {
     throw new Error(`Student with ID ${studentId} not found.`);
@@ -56,23 +43,20 @@ export const runDegreeAudit = async (studentId) => {
     }
   }
   
-  let allCoursesStillNeeded = [];
+  let allCoursesStillNeededKeys = [];
   const auditResults = rules.map(rule => {
     let isSatisfied = false;
     let notes = '';
-    let coursesStillNeeded = [];
+    let coursesStillNeededForRule = [];
 
-    // --- THIS IS THE FIX ---
-    // This logic now runs for ANY rule that has a 'Courses' array.
     if (rule.Courses && Array.isArray(rule.Courses)) {
-      coursesStillNeeded = rule.Courses.filter(reqCourse => !hasCompletedCourse(reqCourse, effectiveCompletedCourses));
-      isSatisfied = coursesStillNeeded.length === 0;
+      coursesStillNeededForRule = rule.Courses.filter(reqCourse => !hasCompletedCourse(reqCourse, effectiveCompletedCourses));
+      isSatisfied = coursesStillNeededForRule.length === 0;
       const ruleTypeName = rule.RequirementType.replace(/_/g, ' ').toLowerCase();
       notes = isSatisfied 
         ? `All ${ruleTypeName} courses completed.` 
-        : `${coursesStillNeeded.length} ${ruleTypeName} course(s) remaining.`;
+        : `${coursesStillNeededForRule.length} ${ruleTypeName} course(s) remaining.`;
     } 
-    // This logic remains for rules that only check for credits (like electives).
     else if (rule.MinCredits) {
       const completedElectives = effectiveCompletedCourses.filter(c =>
         rule.AllowedSubjects.includes(c.Subject) &&
@@ -83,22 +67,22 @@ export const runDegreeAudit = async (studentId) => {
       notes = `${creditsEarned} of ${rule.MinCredits} elective credits completed.`;
     }
     
-    allCoursesStillNeeded.push(...coursesStillNeeded);
+    coursesStillNeededForRule.forEach(course => {
+        if (!allCoursesStillNeededKeys.some(c => c.Subject === course.Subject && c.CourseNumber === course.CourseNumber)) {
+            allCoursesStillNeededKeys.push({ Subject: course.Subject, CourseNumber: course.CourseNumber });
+        }
+    });
 
-    return { requirementType: rule.RequirementType, isSatisfied, notes, coursesStillNeeded };
+    return { requirementType: rule.RequirementType, isSatisfied, notes, coursesStillNeeded: coursesStillNeededForRule };
   });
 
-  // 4. & 5. Prerequisite checking and returning the report (no changes here)
-  const eligibleCoursesCheck = await Promise.all(
-    allCoursesStillNeeded.map(async (neededCourse) => {
-      const courseDetails = await getCourseByKey(neededCourse.Subject, neededCourse.CourseNumber);
-      const prerequisites = courseDetails?.Prerequisites;
-      const canTake = arePrerequisitesMet(prerequisites, effectiveCompletedCourses);
-      return { ...neededCourse, canTake };
-    })
-  );
+  // --- THIS IS THE KEY CHANGE ---
+  // Fetch full details for all remaining courses at once.
+  const allRemainingCoursesDetails = await getCoursesByKeys(allCoursesStillNeededKeys);
 
-  const eligibleCourses = eligibleCoursesCheck.filter(course => course.canTake);
+  const eligibleCourses = allRemainingCoursesDetails.filter(course => 
+    arePrerequisitesMet(course.Prerequisites, effectiveCompletedCourses)
+  );
 
   return {
     studentId: student.StudentId,
@@ -106,6 +90,8 @@ export const runDegreeAudit = async (studentId) => {
     auditDate: new Date().toISOString(),
     studentCompletedCourses: student.CompletedCourses || [],
     results: auditResults,
+    // Return the full course objects for both lists
+    allRemainingCourses: allRemainingCoursesDetails, 
     eligibleNextCourses: eligibleCourses,
   };
 };
