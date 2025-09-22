@@ -1,6 +1,11 @@
 import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient } from '../config/db.js';
-import config from '../config/config.json' assert { type: 'json' };
+import fs from 'fs'; // 1. Import the built-in Node.js file system module
+import path from 'path';
+
+// 2. Read the config file using the stable 'fs' module
+const configPath = path.resolve(process.cwd(), 'src/config/config.json');
+const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
 const courseTable = config.db_tables.courses;
 const reqsTable = config.db_tables.degree_reqs;
