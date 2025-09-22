@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchDegreeRules, deleteRule, createOrUpdateRule, fetchAllMajorCodes } from '../api/api';
+import { fetchDegreeRules, deleteRule, createOrUpdateRule, fetchAllMajorCodes } from '../../api/api';
 
 const RulesPage = () => {
   const [rules, setRules] = useState([]);

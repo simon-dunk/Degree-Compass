@@ -5,12 +5,14 @@ import { generateDegreePlan } from '../../services/planGeneratorService.js';
  * @route   POST /api/planner/generate/:studentId
  * @access  Public
  */
+
 export const getGeneratedPlan = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { pinnedCourses } = req.body; // Get pinned courses from request body
+    // Get both pinnedCourses and numSemesters from the body
+    const { pinnedCourses, numSemesters } = req.body; 
 
-    const plan = await generateDegreePlan(studentId, pinnedCourses);
+    const plan = await generateDegreePlan(studentId, pinnedCourses, numSemesters);
     res.status(200).json(plan);
   } catch (error) {
     res.status(500).json({ message: 'Failed to generate plan.', error: error.message });

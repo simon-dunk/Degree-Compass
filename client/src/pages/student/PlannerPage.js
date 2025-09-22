@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchAuditReport, fetchAllStudents, generatePlan } from '../api/api';
-import StyledSelect from '../components/StyledSelect';
+import { fetchAuditReport, fetchAllStudents, generatePlan } from '../../api/api';
+import StyledSelect from '../../components/StyledSelect';
 
 const PlannerPage = () => {
   const [auditReport, setAuditReport] = useState(null);

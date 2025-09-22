@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import DataTable from '../components/DataTable';
-import StyledStudentTable from '../components/StyledStudentTable';
-import StyledDegreeRequirementsTable from '../components/StyledDegreeRequirementsTable';
-import Modal from '../components/Modal';
-import StyledDegreeRequirementDetails from '../components/StyledDegreeRequirementDetails';
-import StyledStudentDetails from '../components/StyledStudentDetails';
-import ItemEditorForm from '../components/ItemEditorForm';
-import { fetchTableContents, deleteItem, generateMassData } from '../api/devToolsApi';
+import DataTable from '../../components/DataTable';
+import StyledStudentTable from '../../components/StyledStudentTable';
+import StyledDegreeRequirementsTable from '../../components/StyledDegreeRequirementsTable';
+import Modal from '../../components/Modal';
+import StyledDegreeRequirementDetails from '../../components/StyledDegreeRequirementDetails';
+import StyledStudentDetails from '../../components/StyledStudentDetails';
+import ItemEditorForm from '../../components/ItemEditorForm';
+import { fetchTableContents, deleteItem, generateMassData } from '../../api/devToolsApi';
 
 const TABLE_NAMES = ['CourseDatabase', 'StudentDatabase', 'DegreeRequirements'];
 

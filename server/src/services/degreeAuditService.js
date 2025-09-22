@@ -36,7 +36,7 @@ const arePrerequisitesMet = (prerequisites, completedCourses) => {
  * @returns {Promise<object>} A detailed audit report.
  */
 export const runDegreeAudit = async (studentId) => {
-  // 1. Fetch Student and Degree Rules
+  // 1. Fetch data and process overrides (no changes here)
   const student = await getStudentById(studentId);
   if (!student) {
     throw new Error(`Student with ID ${studentId} not found.`);
@@ -44,7 +44,6 @@ export const runDegreeAudit = async (studentId) => {
   const majorCode = student.Major[0];
   const rules = await getRulesByMajor(majorCode);
 
-  // 2. Process Overrides to create an effective list of completed courses
   let effectiveCompletedCourses = [...(student.CompletedCourses || [])];
   if (student.Overrides) {
     for (const override of student.Overrides) {
@@ -57,19 +56,24 @@ export const runDegreeAudit = async (studentId) => {
     }
   }
   
-  // 3. Process each requirement rule and identify all remaining courses
   let allCoursesStillNeeded = [];
   const auditResults = rules.map(rule => {
     let isSatisfied = false;
     let notes = '';
     let coursesStillNeeded = [];
 
-    if (rule.RequirementType === 'CORE') {
+    // --- THIS IS THE FIX ---
+    // This logic now runs for ANY rule that has a 'Courses' array.
+    if (rule.Courses && Array.isArray(rule.Courses)) {
       coursesStillNeeded = rule.Courses.filter(reqCourse => !hasCompletedCourse(reqCourse, effectiveCompletedCourses));
       isSatisfied = coursesStillNeeded.length === 0;
-      notes = isSatisfied ? 'All core courses completed.' : `${coursesStillNeeded.length} core course(s) remaining.`;
+      const ruleTypeName = rule.RequirementType.replace(/_/g, ' ').toLowerCase();
+      notes = isSatisfied 
+        ? `All ${ruleTypeName} courses completed.` 
+        : `${coursesStillNeeded.length} ${ruleTypeName} course(s) remaining.`;
     } 
-    else if (rule.RequirementType === 'ELECTIVES') {
+    // This logic remains for rules that only check for credits (like electives).
+    else if (rule.MinCredits) {
       const completedElectives = effectiveCompletedCourses.filter(c =>
         rule.AllowedSubjects.includes(c.Subject) &&
         (!rule.Restrictions || c.CourseNumber >= 3000)
@@ -77,16 +81,14 @@ export const runDegreeAudit = async (studentId) => {
       const creditsEarned = completedElectives.reduce((sum, course) => sum + (course.Credits || 3), 0);
       isSatisfied = creditsEarned >= rule.MinCredits;
       notes = `${creditsEarned} of ${rule.MinCredits} elective credits completed.`;
-      // Note: Elective "courses still needed" is more complex (path generation), so we'll leave it empty for now.
     }
     
-    // Add the needed courses from this rule to our master list
     allCoursesStillNeeded.push(...coursesStillNeeded);
 
     return { requirementType: rule.RequirementType, isSatisfied, notes, coursesStillNeeded };
   });
 
-  // 4. Determine which of the needed courses are eligible to be taken next
+  // 4. & 5. Prerequisite checking and returning the report (no changes here)
   const eligibleCoursesCheck = await Promise.all(
     allCoursesStillNeeded.map(async (neededCourse) => {
       const courseDetails = await getCourseByKey(neededCourse.Subject, neededCourse.CourseNumber);
@@ -98,13 +100,12 @@ export const runDegreeAudit = async (studentId) => {
 
   const eligibleCourses = eligibleCoursesCheck.filter(course => course.canTake);
 
-  // 5. Structure and return the final report
   return {
     studentId: student.StudentId,
     major: majorCode,
     auditDate: new Date().toISOString(),
     studentCompletedCourses: student.CompletedCourses || [],
     results: auditResults,
-    eligibleNextCourses: eligibleCourses, // Add the new list to our report
+    eligibleNextCourses: eligibleCourses,
   };
 };

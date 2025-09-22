@@ -2,7 +2,9 @@ import React from 'react';
 
 const TimePicker24Hour = ({ value, onChange }) => {
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-  const minutes = ['00', '15', '30', '45'];
+  
+  // --- UPDATED: Generate minutes in 5-minute increments ---
+  const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')); // 00, 05, 10...55
 
   const [currentHour, currentMinute] = (value || '00:00').split(':');
 

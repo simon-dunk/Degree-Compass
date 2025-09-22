@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import CalendarGrid from '../components/CalendarGrid';
-import CustomEventForm from '../components/CustomEventForm'; // 1. Import new component
-import TimeTracker from '../components/TimeTracker';
-import { formatTime12Hour } from '../utils/formatters';
+import CalendarGrid from '../../components/CalendarGrid';
+import CustomEventForm from '../../components/CustomEventForm'; // 1. Import new component
+import TimeTracker from '../../components/TimeTracker';
+import { formatTime12Hour } from '../../utils/formatters';
 
 const ScheduleBuilderPage = () => {
   const [scheduledEvents, setScheduledEvents] = useState([]); // Renamed for clarity

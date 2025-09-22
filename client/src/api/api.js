@@ -126,16 +126,28 @@ export const fetchAllStudents = () => {
  * @param {Array<object>} [pinnedCourses=[]] - Optional list of courses to prioritize.
  * @returns {Promise<object>} A promise that resolves to the generated plan.
  */
-export const generatePlan = (studentId, pinnedCourses = []) => {
+export const generatePlan = (studentId, pinnedCourses = [], numSemesters = 8) => {
   return apiRequest(`${API_BASE_URL}/planner/generate/${studentId}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ pinnedCourses }),
+    // Send numSemesters in the body
+    body: JSON.stringify({ pinnedCourses, numSemesters }),
   });
 };
 
-export const fetchAllCourses = () => {
-  return apiRequest(`${API_BASE_URL}/courses`);
+/**
+ * Adds a completed course to a student's record.
+ * @param {string} studentId - The ID of the student.
+ * @param {object} courseData - The course object to add.
+ * @returns {Promise<object>} The server's confirmation response.
+ */
+export const addCompletedCourse = (studentId, courseData) => {
+  return apiRequest(`${API_BASE_URL}/students/${studentId}/completed-courses`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(courseData),
+  });
 };
+

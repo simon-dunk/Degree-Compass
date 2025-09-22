@@ -105,3 +105,33 @@ export const getAllStudents = async () => {
     throw new Error('Could not fetch list of students from database.');
   }
 };
+
+/**
+ * Adds a new completed course object to a student's CompletedCourses list.
+ * @param {string} studentId - The ID of the student to update.
+ * @param {object} courseData - The course object to add (must include Subject, CourseNumber, and Grade).
+ * @returns {Promise<object>} The updated student item attributes.
+ */
+export const addCompletedCourseToStudent = async (studentId, courseData) => {
+  const params = {
+    TableName: tableName,
+    Key: { StudentId: parseInt(studentId, 10) },
+    UpdateExpression: 'SET #completed = list_append(if_not_exists(#completed, :empty_list), :new_course)',
+    ExpressionAttributeNames: {
+      '#completed': 'CompletedCourses',
+    },
+    ExpressionAttributeValues: {
+      ':new_course': [courseData],
+      ':empty_list': [],
+    },
+    ReturnValues: 'ALL_NEW',
+  };
+  try {
+    const command = new UpdateCommand(params);
+    const { Attributes } = await docClient.send(command);
+    return Attributes;
+  } catch (error) {
+    console.error(`DynamoDB Error adding completed course to student ${studentId}:`, error);
+    throw new Error('Could not add completed course to student.');
+  }
+};

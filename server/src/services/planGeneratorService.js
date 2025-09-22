@@ -9,7 +9,8 @@ const MAX_CREDITS_PER_SEMESTER = 15;
  * @param {Array<object>} [pinnedCourses=[]] - An optional array of courses the user wants to prioritize.
  * @returns {Promise<Array<object>>} A promise that resolves to a semester-by-semester plan.
  */
-export const generateDegreePlan = async (studentId, pinnedCourses = []) => {
+export const generateDegreePlan = async (studentId, pinnedCourses = [], numSemesters = 8) => {
+
   const initialAudit = await runDegreeAudit(studentId);
   
   // Create a set of unique course identifiers for easy lookup

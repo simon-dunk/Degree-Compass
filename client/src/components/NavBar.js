@@ -1,33 +1,42 @@
 import React from 'react';
 
 const NavBar = ({ currentPage, setCurrentPage }) => {
-  // 1. Add 'schedule' to the list of pages
-  const pages = ['planner', 'schedule', 'rules', 'overrides', 'dev'];
-
-  const getPageName = (pageId) => {
-    switch (pageId) {
-      case 'planner': return 'Student Planner';
-      case 'schedule': return 'Schedule Builder'; // 2. Add the display name
-      case 'rules': return 'Rules Admin';
-      case 'overrides': return 'Overrides Admin';
-      case 'dev': return 'Developer Tools';
-      default: return '';
-    }
-  };
+  const studentPages = { planner: 'Student Planner', schedule: 'Schedule Builder' };
+  const adminPages = { rules: 'Rules Admin', overrides: 'Overrides Admin' };
+  const devPages = { dev: 'Developer Tools' };
 
   return (
     <nav style={styles.nav}>
       <div style={styles.logo}>Degree Compass</div>
-      <div>
-        {pages.map(page => (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            style={currentPage === page ? { ...styles.button, ...styles.activeButton } : styles.button}
-          >
-            {getPageName(page)}
-          </button>
-        ))}
+      <div style={styles.navSections}>
+        {/* Student Section */}
+        <div>
+          {Object.entries(studentPages).map(([id, name]) => (
+            <button key={id} onClick={() => setCurrentPage(id)} style={currentPage === id ? {...styles.button, ...styles.activeButton} : styles.button}>
+              {name}
+            </button>
+          ))}
+        </div>
+        {/* Admin Section */}
+        <div style={styles.sectionDivider}></div>
+        <div>
+          <span style={styles.sectionTitle}>Admin</span>
+          {Object.entries(adminPages).map(([id, name]) => (
+            <button key={id} onClick={() => setCurrentPage(id)} style={currentPage === id ? {...styles.button, ...styles.activeButton} : styles.button}>
+              {name}
+            </button>
+          ))}
+        </div>
+        {/* Dev Section */}
+        <div style={styles.sectionDivider}></div>
+        <div>
+           <span style={styles.sectionTitle}>Dev</span>
+           {Object.entries(devPages).map(([id, name]) => (
+            <button key={id} onClick={() => setCurrentPage(id)} style={currentPage === id ? {...styles.button, ...styles.activeButton} : styles.button}>
+              {name}
+            </button>
+          ))}
+        </div>
       </div>
     </nav>
   );
@@ -61,7 +70,20 @@ const styles = {
     activeButton: {
         color: '#005826', // --primary-color
         borderBottom: '4px solid #005826',
-    }
+    },
+    navSections: { display: 'flex', alignItems: 'center' },
+    sectionDivider: {
+        height: '20px',
+        width: '1px',
+        backgroundColor: '#ccc',
+        margin: '0 1rem'
+    },
+    sectionTitle: {
+        marginRight: '1rem',
+        color: '#888',
+        fontSize: '0.9rem',
+        fontWeight: 'bold',
+    },
 };
 
 export default NavBar;

@@ -77,3 +77,25 @@ export const getAllStudents = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching students.', error: error.message });
   }
 };
+
+/**
+ * @desc    Add a completed course to a student's record
+ * @route   POST /api/students/:studentId/completed-courses
+ * @access  Private (Admin)
+ */
+export const addCompletedCourse = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const courseData = req.body;
+
+    // Basic validation
+    if (!courseData.Subject || !courseData.CourseNumber || !courseData.Grade) {
+      return res.status(400).json({ message: 'Course data must include Subject, CourseNumber, and Grade.' });
+    }
+
+    const updatedStudent = await studentsService.addCompletedCourseToStudent(studentId, courseData);
+    res.status(200).json({ message: 'Completed course added successfully.', student: updatedStudent });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error adding completed course.', error: error.message });
+  }
+};
