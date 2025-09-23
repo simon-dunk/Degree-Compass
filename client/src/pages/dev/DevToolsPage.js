@@ -201,15 +201,16 @@ const styles = {
     toggleContainer: { display: 'flex', border: '1px solid #ccc', borderRadius: '5px' },
     toggle: { padding: '8px 16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555' },
     toggleActive: { padding: '8px 16px', border: 'none', backgroundColor: '#005826', color: 'white', cursor: 'pointer', borderRadius: '4px' },
-    tabs: { display: 'flex', borderBottom: '2px solid #eee' },
-    tab: {
-        padding: '10px 20px', cursor: 'pointer', border: 'none', backgroundColor: 'transparent',
-        fontSize: '1rem', color: '#555', borderBottom: '3px solid transparent'
+    content: { paddingTop: '1.5rem' },
+    tabs: { display: 'flex', gap: '5px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' },
+    tab: { padding: '10px 20px', border: 'none', background: '#f0f0f0', cursor: 'pointer', fontSize: '1rem' },
+    activeTab: { background: '#005826', color: 'white' },
+    button: {
+      padding: '10px 20px', fontSize: '1rem', cursor: 'pointer', border: 'none',
+      borderRadius: '5px', backgroundColor: '#005826', color: 'white'
     },
-    activeTab: {
-        borderBottom: '3px solid #005826', fontWeight: 'bold', color: '#000'
-    },
-    content: { paddingTop: '1.5rem' }
+    seedButton: { backgroundColor: '#c82333' },
+    errorText: { color: 'red', backgroundColor: '#fbe9e7', padding: '10px', borderRadius: '5px' },
 };
 
 export default DevToolsPage;
