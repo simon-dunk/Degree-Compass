@@ -22,7 +22,6 @@ const arePrerequisitesMet = (prerequisites, completedCourses) => {
  * @returns {Promise<object>} A detailed audit report.
  */
 export const runDegreeAudit = async (studentId) => {
-  // Fetch student and all courses in parallel for efficiency
   const [student, allCourses] = await Promise.all([
     getStudentById(studentId),
     getAllCourses()
@@ -32,23 +31,42 @@ export const runDegreeAudit = async (studentId) => {
     throw new Error(`Student with ID ${studentId} not found.`);
   }
   const majorCode = student.Major[0];
-  const rules = await getRulesByMajor(majorCode);
+  const originalRules = await getRulesByMajor(majorCode);
 
-  let effectiveCompletedCourses = [...(student.CompletedCourses || [])];
+  // --- THIS IS THE FIX ---
+  // Deep copy the rules to create a temporary, modified set for this specific student.
+  let effectiveRules = JSON.parse(JSON.stringify(originalRules));
+
+  // If the student has overrides, modify the effective rules before running the audit.
   if (student.Overrides) {
-    for (const override of student.Overrides) {
-      const hasTakenSubFor = override.SubFor.some(subCourse =>
-        hasCompletedCourse(subCourse, effectiveCompletedCourses)
-      );
-      if (hasTakenSubFor) {
-        effectiveCompletedCourses.push(override.SubThis);
-      }
-    }
-  }
+    const subMap = new Map();
+    student.Overrides.forEach(override => {
+      // Key: The course to be replaced (e.g., "CIS-2103")
+      const subThisId = `${override.SubThis.Subject}-${override.SubThis.CourseNumber}`;
+      // Value: The course that will take its place (e.g., { Subject: "ART", CourseNumber: 1213 })
+      const subForCourse = override.SubFor[0]; 
+      subMap.set(subThisId, subForCourse);
+    });
 
-  // Create a Set of all course IDs that are required for the degree
+    // Iterate through the copied rules and apply the substitutions.
+    effectiveRules = effectiveRules.map(rule => {
+      if (rule.Courses) {
+        rule.Courses = rule.Courses.map(course => {
+          const courseId = `${course.Subject}-${course.CourseNumber}`;
+          if (subMap.has(courseId)) {
+            return subMap.get(courseId); // Replace the original requirement
+          }
+          return course; // Keep the original course
+        });
+      }
+      return rule;
+    });
+  }
+  
+  const effectiveCompletedCourses = [...(student.CompletedCourses || [])];
+
   const allRequiredCourseIds = new Set();
-  rules.forEach(rule => {
+  effectiveRules.forEach(rule => { // Use the modified rules
       if (rule.Courses) {
           rule.Courses.forEach(course => {
               allRequiredCourseIds.add(`${course.Subject}-${course.CourseNumber}`);
@@ -58,15 +76,13 @@ export const runDegreeAudit = async (studentId) => {
 
   const completedCourseIds = new Set(effectiveCompletedCourses.map(c => `${c.Subject}-${c.CourseNumber}`));
 
-  // --- NEW: Calculate available electives ---
   const availableElectives = allCourses.filter(course => {
       const courseId = `${course.Subject}-${course.CourseNumber}`;
-      // An elective is a course that is NOT required and NOT already completed
       return !allRequiredCourseIds.has(courseId) && !completedCourseIds.has(courseId);
   });
 
   let allCoursesStillNeededKeys = [];
-  const auditResults = rules.map(rule => {
+  const auditResults = effectiveRules.map(rule => { // Use the modified rules
     let isSatisfied = false;
     let notes = '';
     let coursesStillNeededForRule = [];
@@ -84,7 +100,9 @@ export const runDegreeAudit = async (studentId) => {
         rule.AllowedSubjects?.includes(c.Subject) &&
         (!rule.Restrictions || c.CourseNumber >= 3000)
       );
+      
       const creditsEarned = completedElectives.reduce((sum, course) => sum + (course.Credits || 3), 0);
+      
       isSatisfied = creditsEarned >= rule.MinCredits;
       notes = `${creditsEarned} of ${rule.MinCredits} elective credits completed.`;
 
@@ -122,6 +140,6 @@ export const runDegreeAudit = async (studentId) => {
     results: auditResults,
     allRemainingCourses: allRemainingCoursesDetails,
     eligibleNextCourses: eligibleCourses,
-    availableElectives: availableElectives // Add the new list to the report
+    availableElectives: availableElectives
   };
 };
