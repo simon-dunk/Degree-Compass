@@ -18,13 +18,11 @@ const OverridesPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- Form State ---
   const [subThisCourse, setSubThisCourse] = useState('');
   const [subForCourses, setSubForCourses] = useState('');
   const [newCompletedCourse, setNewCompletedCourse] = useState('');
   const [newGrade, setNewGrade] = useState('');
 
-  // Fetch students and courses on initial load
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -44,7 +42,6 @@ const OverridesPage = () => {
     loadInitialData();
   }, []);
 
-  // Fetch details for the selected student whenever the selection changes
   useEffect(() => {
     if (!selectedStudentId) return;
     const loadStudentDetails = async () => {
@@ -70,9 +67,10 @@ const OverridesPage = () => {
       return;
     }
 
+    // --- THIS IS THE FIX ---
     const parseCourse = (courseString) => {
-      const [Subject, Course] = courseString.trim().split(' ');
-      return { Subject, Course };
+      const [Subject, CourseNumberStr] = courseString.trim().split(' ');
+      return { Subject, CourseNumber: parseInt(CourseNumberStr, 10) };
     };
 
     const subForArray = subForCourses.split(',').map(courseStr => parseCourse(courseStr));
@@ -181,7 +179,7 @@ const OverridesPage = () => {
                 {studentData.Overrides.map((override, index) => (
                   <li key={index} style={styles.overrideItem}>
                     <span>
-                      <strong>Substitute {override.SubThis.Subject} {override.SubThis.Course}</strong> for {override.SubFor.map(c => `${c.Subject} ${c.Course}`).join(' OR ')}
+                      <strong>Substitute {override.SubThis.Subject} {override.SubThis.CourseNumber}</strong> for {override.SubFor.map(c => `${c.Subject} ${c.CourseNumber}`).join(' OR ')}
                     </span>
                     <button onClick={() => handleDeleteOverride(index)} style={{...styles.button, ...styles.deleteButton}}>Delete</button>
                   </li>
@@ -222,7 +220,6 @@ const OverridesPage = () => {
   );
 };
 
-// --- STYLES ---
 const styles = {
     container: { padding: '2rem', fontFamily: 'sans-serif', maxWidth: '900px', margin: 'auto' },
     card: { border: '1px solid #ccc', borderRadius: '8px', padding: '1rem 2rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAuditReport, fetchAllStudents, generateNextSemester } from '../../api/api';
 import StyledSelect from '../../components/StyledSelect';
 
-// ... (helper function remains the same)
 const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
     if (!prerequisites || prerequisites.length === 0) return true;
     const completedIds = new Set(
@@ -14,9 +13,56 @@ const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
     });
 };
 
+// --- NEW: Helper Component for rendering the course lists with dividers ---
+const PinnableCourseList = ({ title, courses, pinnedCourses, onPinToggle, eligibleCourseIds }) => {
+    if (!courses || courses.length === 0) return null;
+  
+    // Sort courses by Subject, then CourseNumber
+    const sortedCourses = [...courses].sort((a, b) => {
+      if (a.Subject < b.Subject) return -1;
+      if (a.Subject > b.Subject) return 1;
+      return a.CourseNumber - b.CourseNumber;
+    });
+  
+    let lastSubject = null;
+  
+    return (
+      <div style={styles.pinningSection}>
+        <h4>{title}</h4>
+        {sortedCourses.map(course => {
+          const courseId = `${course.Subject}-${course.CourseNumber}`;
+          const isChecked = pinnedCourses.some(p => `${p.Subject}-${p.CourseNumber}` === courseId);
+          const isEligible = eligibleCourseIds.has(courseId);
+          const prereqText = (course.Prerequisites && course.Prerequisites.length > 0)
+            ? `Prerequisites: ${course.Prerequisites.map(p => `${p.Subject} ${p.CourseNumber}`).join(', ')}`
+            : 'No Prerequisites';
+          
+          const showDivider = course.Subject !== lastSubject;
+          lastSubject = course.Subject;
+  
+          return (
+            <React.Fragment key={courseId}>
+              {showDivider && <div style={styles.subjectDivider}>{course.Subject}</div>}
+              <div style={{...styles.pinItem, opacity: isEligible ? 1 : 0.6 }}>
+                <label title={isEligible ? 'Eligible to take next semester' : prereqText}>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => onPinToggle(course)}
+                    disabled={!isEligible}
+                  />
+                  {course.CourseNumber} - {course.Name}
+                </label>
+              </div>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    );
+  };
+
 
 const PlannerPage = () => {
-  // ... (existing state)
   const [auditReport, setAuditReport] = useState(null);
   const [lockedSemesters, setLockedSemesters] = useState([]);
   const [suggestedNextSemester, setSuggestedNextSemester] = useState(null);
@@ -31,8 +77,6 @@ const PlannerPage = () => {
   const [liveEligibleCourseIds, setLiveEligibleCourseIds] = useState(new Set());
   const [editingSemesterIndex, setEditingSemesterIndex] = useState(null);
   const [editingSemesterName, setEditingSemesterName] = useState('');
-
-  // --- NEW: State for pinned electives ---
   const [pinnedElectives, setPinnedElectives] = useState([]);
 
   const selectedStudentInfo = React.useMemo(() => {
@@ -67,7 +111,7 @@ const PlannerPage = () => {
       setLockedSemesters([]);
       setSuggestedNextSemester(null);
       setPinnedCourses([]);
-      setPinnedElectives([]); // Reset electives on student change
+      setPinnedElectives([]);
       setShowCompletedCourses(false); 
       const report = await fetchAuditReport(selectedStudentId);
       setAuditReport(report);
@@ -84,6 +128,7 @@ const PlannerPage = () => {
     loadAuditReport();
   }, [loadAuditReport]);
 
+  // This useEffect hook is back to its original, working state
   useEffect(() => {
     if (!auditReport) return;
 
@@ -101,12 +146,16 @@ const PlannerPage = () => {
             const courseId = `${course.Subject}-${course.CourseNumber}`;
             return !plannedCourseIds.has(courseId);
         });
-        return { ...req, coursesStillNeeded: stillNeeded, isSatisfied: stillNeeded.length === 0 };
+        
+        return {
+            ...req,
+            coursesStillNeeded: stillNeeded,
+            isSatisfied: stillNeeded.length === 0,
+        };
     });
     setRemainingRequirements(updatedRequirements);
 
     const newEligibleIds = new Set();
-    // Check eligibility for both remaining required courses AND available electives
     [...(auditReport.allRemainingCourses || []), ...(auditReport.availableElectives || [])].forEach(course => {
         if (arePrerequisitesMet(course.Prerequisites, allCompletedAndPlannedCourses)) {
             newEligibleIds.add(`${course.Subject}-${course.CourseNumber}`);
@@ -121,7 +170,6 @@ const PlannerPage = () => {
     setIsGenerating(true);
     setError(null);
     try {
-      // --- COMBINE pinned courses and electives before sending ---
       const allPinned = [...pinnedCourses, ...pinnedElectives];
       const allPreviouslyCompleted = [
         ...(auditReport.studentCompletedCourses || []),
@@ -152,7 +200,7 @@ const PlannerPage = () => {
         setLockedSemesters([...lockedSemesters, suggestedNextSemester]);
         setSuggestedNextSemester(null);
         setPinnedCourses([]);
-        setPinnedElectives([]); // Clear pinned electives after locking
+        setPinnedElectives([]);
     }
   };
   
@@ -199,7 +247,6 @@ const PlannerPage = () => {
     });
   };
   
-  // --- NEW handler for pinning electives ---
   const handleElectivePinToggle = (course) => {
     setPinnedElectives(prevPinned => {
       const isPinned = prevPinned.some(p => p.Subject === course.Subject && p.CourseNumber === course.CourseNumber);
@@ -220,12 +267,10 @@ const PlannerPage = () => {
       return !plannedCourseIds.has(courseId);
   }) || [];
   
-  // --- NEW list for available electives ---
   const availableElectives = auditReport?.availableElectives.filter(course => {
       const courseId = `${course.Subject}-${course.CourseNumber}`;
       return !plannedCourseIds.has(courseId);
   }) || [];
-
 
   return (
     <div style={styles.container}>
@@ -272,6 +317,7 @@ const PlannerPage = () => {
                                 </ul>
                             </div>
                         )}
+                         {result.MinCredits && <p style={{padding: '0 1.5rem 1rem'}}>{result.notes}</p>}
                     </div>
                 ))}
             </div>
@@ -356,34 +402,22 @@ const PlannerPage = () => {
                     </StyledSelect>
                 </div>
                 
-                {pinnableCourses.length > 0 && (
-                    <div style={styles.pinningSection}>
-                        <h4>Pin Required Courses</h4>
-                        {pinnableCourses.map(course => {
-                            const courseId = `${course.Subject}-${course.CourseNumber}`;
-                            const isChecked = pinnedCourses.some(p => `${p.Subject}-${p.CourseNumber}` === courseId);
-                            const isEligible = liveEligibleCourseIds.has(courseId);
-                            const prereqText = (course.Prerequisites && course.Prerequisites.length > 0)
-                                ? `Prerequisites: ${course.Prerequisites.map(p => `${p.Subject} ${p.CourseNumber}`).join(', ')}`
-                                : 'No Prerequisites';
-
-                            return (
-                                <div key={courseId} style={{...styles.pinItem, opacity: isEligible ? 1 : 0.6 }}>
-                                    <label title={isEligible ? 'Eligible to take next semester' : prereqText}>
-                                        <input
-                                            type="checkbox"
-                                            checked={isChecked}
-                                            onChange={() => handlePinToggle(course)}
-                                            disabled={!isEligible}
-                                        />
-                                        {course.Subject} {course.CourseNumber} - {course.Name}
-                                    </label>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-
+                <PinnableCourseList 
+                    title="Pin Required Courses"
+                    courses={pinnableCourses}
+                    pinnedCourses={pinnedCourses}
+                    onPinToggle={handlePinToggle}
+                    eligibleCourseIds={liveEligibleCourseIds}
+                />
+                
+                <PinnableCourseList 
+                    title="Select Electives"
+                    courses={availableElectives}
+                    pinnedCourses={pinnedElectives}
+                    onPinToggle={handleElectivePinToggle}
+                    eligibleCourseIds={liveEligibleCourseIds}
+                />
+                
                 <div style={styles.buttonGroup}>
                     <button onClick={handleGenerateNextSemester} disabled={!auditReport || isGenerating} style={styles.button}>
                         {isGenerating ? 'Generating...' : 'Generate Next Semester'}
@@ -392,35 +426,6 @@ const PlannerPage = () => {
                         Reset Plan
                     </button>
                 </div>
-
-                {/* --- NEW ELECTIVES SECTION --- */}
-                {availableElectives.length > 0 && (
-                    <div style={styles.pinningSection}>
-                        <h4>Select Electives</h4>
-                        {availableElectives.map(course => {
-                            const courseId = `${course.Subject}-${course.CourseNumber}`;
-                            const isChecked = pinnedElectives.some(p => `${p.Subject}-${p.CourseNumber}` === courseId);
-                            const isEligible = liveEligibleCourseIds.has(courseId);
-                            const prereqText = (course.Prerequisites && course.Prerequisites.length > 0)
-                                ? `Prerequisites: ${course.Prerequisites.map(p => `${p.Subject} ${p.CourseNumber}`).join(', ')}`
-                                : 'No Prerequisites';
-                            
-                            return (
-                                <div key={courseId} style={{...styles.pinItem, opacity: isEligible ? 1 : 0.6}}>
-                                    <label title={isEligible ? 'Eligible to take next semester' : prereqText}>
-                                        <input
-                                            type="checkbox"
-                                            checked={isChecked}
-                                            onChange={() => handleElectivePinToggle(course)}
-                                            disabled={!isEligible}
-                                        />
-                                        {course.Subject} {course.CourseNumber} - {course.Name}
-                                    </label>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
             </div>
         </div>
       )}
@@ -495,9 +500,20 @@ const styles = {
       padding: '1rem',
       border: '1px solid #eee',
       borderRadius: '8px',
+      maxHeight: '250px',
+      overflowY: 'auto'
     },
     pinItem: {
         padding: '4px 0',
+    },
+    subjectDivider: {
+        fontWeight: 'bold',
+        color: '#005826',
+        backgroundColor: '#f7f7f7',
+        padding: '4px 8px',
+        marginTop: '8px',
+        borderTop: '1px solid #eee',
+        borderBottom: '1px solid #eee'
     },
     buttonGroup: { display: 'flex', gap: '1rem', width: '100%' },
     resetButton: { backgroundColor: '#6c757d' },
