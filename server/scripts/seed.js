@@ -7,16 +7,39 @@ import path from 'path';
 const configPath = path.resolve(process.cwd(), 'src/config/config.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
+// --- Helper function to generate a random schedule ---
+const getRandomSchedule = () => {
+    const days = ['MWF', 'TR', 'MW', 'M', 'T', 'W', 'R', 'F'];
+    const startHours = ['08:00', '09:30', '11:00', '13:00', '14:30', '16:00'];
+    const durations = [50, 75, 110]; // 50 min, 75 min, 1h 50min
+    
+    const startTime = startHours[Math.floor(Math.random() * startHours.length)];
+    const duration = durations[Math.floor(Math.random() * durations.length)];
+
+    const [hour, minute] = startTime.split(':').map(Number);
+    const startDate = new Date(0, 0, 0, hour, minute);
+    const endDate = new Date(startDate.getTime() + duration * 60000);
+
+    const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+    
+    return {
+        Days: days[Math.floor(Math.random() * days.length)],
+        StartTime: startTime,
+        EndTime: endTime
+    };
+};
+
+
 // --- Sample Data ---
 
 const courses = [
-  { Subject: 'CIS', CourseNumber: 1103, Name: 'Intro to Programming', Credits: 3 },
-  { Subject: 'CIS', CourseNumber: 2143, Name: 'Data Structures', Credits: 3, Prerequisites: [{ Subject: 'CIS', CourseNumber: 1103 }] },
-  { Subject: 'CIS', CourseNumber: 2703, Name: 'Web Development I', Credits: 3 },
-  { Subject: 'CIS', CourseNumber: 3023, Name: 'Advanced Java', Credits: 3 },
-  { Subject: 'MATH', CourseNumber: 1003, Name: 'College Algebra', Credits: 3 },
-  { Subject: 'MATH', CourseNumber: 2703, Name: 'Calculus I', Credits: 4, Prerequisites: [{ Subject: 'MATH', CourseNumber: 1003 }] },
-  { Subject: 'ENGL', CourseNumber: 1113, Name: 'Composition I', Credits: 3 },
+  { Subject: 'CIS', CourseNumber: 1103, Name: 'Intro to Programming', Credits: 3, Schedule: getRandomSchedule() },
+  { Subject: 'CIS', CourseNumber: 2143, Name: 'Data Structures', Credits: 3, Prerequisites: [{ Subject: 'CIS', CourseNumber: 1103 }], Schedule: getRandomSchedule() },
+  { Subject: 'CIS', CourseNumber: 2703, Name: 'Web Development I', Credits: 3, Schedule: getRandomSchedule() },
+  { Subject: 'CIS', CourseNumber: 3023, Name: 'Advanced Java', Credits: 3, Schedule: getRandomSchedule() },
+  { Subject: 'MATH', CourseNumber: 1003, Name: 'College Algebra', Credits: 3, Schedule: getRandomSchedule() },
+  { Subject: 'MATH', CourseNumber: 2703, Name: 'Calculus I', Credits: 4, Prerequisites: [{ Subject: 'MATH', CourseNumber: 1003 }], Schedule: getRandomSchedule() },
+  { Subject: 'ENGL', CourseNumber: 1113, Name: 'Composition I', Credits: 3, Schedule: getRandomSchedule() },
 ];
 
 const degreeRequirements = [

@@ -1,0 +1,4 @@
+Subject,CourseNumber,Name,Credits,Days,StartTime,EndTime,Prerequisites
+ART,3001,Art Studio I,3,TR,09:30,12:00,""
+ART,3002,Art Studio II,3,TR,13:00,15:30,"Art Studio I"
+ART,3003,Art Studio III,3,MW,14:00,16:30,"Art Studio II"

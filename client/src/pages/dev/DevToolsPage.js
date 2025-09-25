@@ -2,13 +2,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DataTable from '../../components/DataTable';
 import StyledStudentTable from '../../components/StyledStudentTable';
 import StyledDegreeRequirementsTable from '../../components/StyledDegreeRequirementsTable';
+import StyledCourseTable from '../../components/StyledCourseTable';
 import Modal from '../../components/Modal';
 import StyledDegreeRequirementDetails from '../../components/StyledDegreeRequirementDetails';
 import StyledStudentDetails from '../../components/StyledStudentDetails';
 import ItemEditorForm from '../../components/ItemEditorForm';
-import { fetchTableContents, deleteItem, generateMassData } from '../../api/devToolsApi';
+import CsvUploader from '../../components/CsvUploader';
+import { fetchTableContents, deleteItem, generateMassData, uploadCourses } from '../../api/devToolsApi';
 
 const TABLE_NAMES = ['CourseDatabase', 'StudentDatabase', 'DegreeRequirements'];
+
+// --- UPDATED: Example CSV content with schedule data ---
+const csvExample = `Subject,CourseNumber,Name,Credits,Days,StartTime,EndTime,Prerequisites
+CS,1013,Intro to Programming,3,MWF,09:00,09:50,""
+CS,2023,Data Structures,3,TR,11:00,12:15,"CS 1013"
+MATH,2614,Calculus I,4,MWF,13:00,13:50,""
+CS,3033,Advanced Algorithms,3,TR,14:30,15:45,"CS 2023;MATH 2614"`;
+
 
 const DevToolsPage = () => {
   const [activeTab, setActiveTab] = useState(TABLE_NAMES[0]);
@@ -44,29 +54,31 @@ const DevToolsPage = () => {
   useEffect(() => {
       setSelectedItem(null);
   }, [activeTab]);
-
-  const handleGenerateData = async () => {
-      if (window.confirm('This will overwrite existing data in the Course and Degree Requirements tables. Are you sure?')) {
-          try {
-            const result = await generateMassData();
-            alert(result.message);
-            loadTableData(); // Refresh the current tab
-          } catch (err) {
-              alert(`Error generating data: ${err.message}`);
-          }
+  
+  const handleCourseUpload = async (courses) => {
+    if (!window.confirm(`This will add or overwrite ${courses.length} courses in the database. Are you sure?`)) {
+      return;
+    }
+    try {
+      const result = await uploadCourses(courses);
+      alert(result.message);
+      if (activeTab === 'CourseDatabase') {
+        loadTableData();
       }
+    } catch (err) {
+      alert(`Error uploading courses: ${err.message}`);
+    }
   };
   
-  const handleViewDetails = (title, content) => {
+  const handleViewDetails = (title, content, view = 'styled') => {
     setModalTitle(title);
     setModalContent(content);
-    setModalViewMode('styled');
+    setModalViewMode(view);
     setIsModalOpen(true);
   };
 
   const handleDeleteItem = async (item) => {
     let key;
-    // Construct the primary key based on the active table
     if (activeTab === 'StudentDatabase') {
         key = { StudentId: item.StudentId };
     } else if (activeTab === 'CourseDatabase') {
@@ -82,7 +94,7 @@ const DevToolsPage = () => {
         try {
             await deleteItem(activeTab, key);
             alert('Item deleted successfully!');
-            loadTableData(); // Refresh the view
+            loadTableData();
         } catch(err) {
             alert(`Delete failed: ${err.message}`);
         }
@@ -94,23 +106,27 @@ const DevToolsPage = () => {
       return <DataTable data={tableData} onSelectItem={setSelectedItem} />;
     }
     
-    // Conditionally render the correct styled table component
     switch (activeTab) {
         case 'StudentDatabase':
-            return <StyledStudentTable data={tableData} onViewDetails={handleViewDetails} onDelete={handleDeleteItem} onSelectItem={setSelectedItem} />;
+            return <StyledStudentTable data={tableData} onViewDetails={(title, data) => handleViewDetails(title, data)} onDelete={handleDeleteItem} onSelectItem={setSelectedItem} />;
         case 'DegreeRequirements':
             return <StyledDegreeRequirementsTable data={tableData} onViewDetails={(rule) => handleViewDetails('Degree Details', rule)} onDelete={handleDeleteItem} onSelectItem={setSelectedItem} />; 
-        default: // This will now apply to CourseDatabase
+        case 'CourseDatabase':
+            return <StyledCourseTable data={tableData} onDelete={handleDeleteItem} onSelectItem={setSelectedItem} />;
+        default:
             return <DataTable data={tableData} onSelectItem={setSelectedItem} />;
     }
   };
 
   const renderModalContent = () => {
+    if (typeof modalContent === 'string') {
+        return <pre>{modalContent}</pre>
+    }
+
     if (modalViewMode === 'json') {
       return <pre>{JSON.stringify(modalContent, null, 2)}</pre>;
     }
     
-    // --- UPDATED STYLED VIEW LOGIC ---
     if (activeTab === 'DegreeRequirements') {
       return <StyledDegreeRequirementDetails rule={modalContent} />;
     }
@@ -118,9 +134,7 @@ const DevToolsPage = () => {
     if (activeTab === 'StudentDatabase' && (modalTitle === 'Completed Courses' || modalTitle === 'Overrides')) {
       return <StyledStudentDetails title={modalTitle} data={modalContent} />;
     }
-    // --- END UPDATE ---
     
-    // Fallback for anything else that doesn't have a custom styled view
     if (Array.isArray(modalContent)) {
       return <p>This data does not have a custom styled view yet.</p>;
     }
@@ -136,7 +150,7 @@ const DevToolsPage = () => {
         onClose={() => setIsModalOpen(false)} 
         title={modalTitle}
         viewMode={modalViewMode}
-        onToggleView={setModalViewMode}
+        onToggleView={modalTitle !== 'CSV Format Example' ? setModalViewMode : null}
       >
         {renderModalContent()}
       </Modal>
@@ -144,13 +158,13 @@ const DevToolsPage = () => {
       <h1>Developer Dashboard</h1>
       <p>A tool for direct database manipulation and data simulation.</p>
 
-      {/* --- THIS IS THE MISSING SECTION --- */}
       <div style={styles.card}>
-          <h2>Data Simulation</h2>
-          <p>Generate a large, realistic set of courses and degree requirements for a full CS program.</p>
-          <button onClick={handleGenerateData} style={styles.button}>Generate Full CS Program Data</button>
+          <h2>Data Import</h2>
+          <CsvUploader 
+            onUpload={handleCourseUpload} 
+            onShowExample={() => handleViewDetails('CSV Format Example', csvExample, 'text')}
+          />
       </div>
-      {/* --- END OF MISSING SECTION --- */}
 
       <div style={styles.card}>
           <div style={styles.header}>
@@ -201,7 +215,6 @@ const styles = {
     toggleContainer: { display: 'flex', border: '1px solid #ccc', borderRadius: '5px' },
     toggle: { padding: '8px 16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555' },
     toggleActive: { padding: '8px 16px', border: 'none', backgroundColor: '#005826', color: 'white', cursor: 'pointer', borderRadius: '4px' },
-    content: { paddingTop: '1.5rem' },
     tabs: { display: 'flex', gap: '5px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' },
     tab: { padding: '10px 20px', border: 'none', background: '#f0f0f0', cursor: 'pointer', fontSize: '1rem' },
     activeTab: { background: '#005826', color: 'white' },
@@ -209,8 +222,7 @@ const styles = {
       padding: '10px 20px', fontSize: '1rem', cursor: 'pointer', border: 'none',
       borderRadius: '5px', backgroundColor: '#005826', color: 'white'
     },
-    seedButton: { backgroundColor: '#c82333' },
-    errorText: { color: 'red', backgroundColor: '#fbe9e7', padding: '10px', borderRadius: '5px' },
+    content: { paddingTop: '1.5rem' }
 };
 
 export default DevToolsPage;

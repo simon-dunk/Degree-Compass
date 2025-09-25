@@ -13,7 +13,7 @@ export const tableSchemas = {
       { key: 'CourseNumber', label: 'Course Number', type: 'number', readOnly: false },
       { key: 'Name', label: 'Course Name', type: 'text', readOnly: false },
       { key: 'Credits', label: 'Credits', type: 'number', readOnly: false },
-      { key: 'Prerequisites', label: 'Prerequisites', type: 'textarea', readOnly: true }, // ReadOnly in main form, handled separately
+      { key: 'Prerequisites', label: 'Prerequisites', type: 'courseSelector', readOnly: false },
     ],
   },
   StudentDatabase: {

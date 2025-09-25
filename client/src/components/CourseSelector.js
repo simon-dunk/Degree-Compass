@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAllCourses } from '../api/api';
+import StyledSelect from './StyledSelect';
 
 const CourseSelector = ({ selectedCourses, onChange }) => {
   const [allCourses, setAllCourses] = useState([]);
@@ -32,14 +33,14 @@ const CourseSelector = ({ selectedCourses, onChange }) => {
   return (
     <div style={styles.container}>
       <div style={styles.selectorRow}>
-        <select value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} style={styles.select}>
+        <StyledSelect value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} style={styles.select}>
           <option value="">-- Select a course to add --</option>
           {allCourses.map(c => (
             <option key={`${c.Subject}-${c.CourseNumber}`} value={`${c.Subject}-${c.CourseNumber}`}>
               {c.Subject} {c.CourseNumber} - {c.Name}
             </option>
           ))}
-        </select>
+        </StyledSelect>
         <button type="button" onClick={handleAddCourse} style={styles.button}>Add</button>
       </div>
       <div style={styles.selectedList}>

@@ -1,11 +1,14 @@
 import { ScanCommand, PutCommand, DeleteCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient } from '../config/db.js';
 
-/**
- * Fetches all items from a specified DynamoDB table.
- * @param {string} tableName - The name of the table to scan.
- * @returns {Promise<Array<object>>} A promise that resolves to the array of items.
- */
+const chunkArray = (array, size) => {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += size) {
+        chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+};
+
 export const getTableContents = async (tableName) => {
   const params = { TableName: tableName };
   try {
@@ -18,12 +21,6 @@ export const getTableContents = async (tableName) => {
   }
 };
 
-/**
- * Adds or updates a single item in a specified DynamoDB table.
- * @param {string} tableName - The name of the table.
- * @param {object} item - The item to add or update.
- * @returns {Promise<object>} The item that was saved.
- */
 export const putItem = async (tableName, item) => {
   const params = { TableName: tableName, Item: item };
   try {
@@ -36,12 +33,6 @@ export const putItem = async (tableName, item) => {
   }
 };
 
-/**
- * Deletes a single item from a specified DynamoDB table.
- * @param {string} tableName - The name of the table.
- * @param {object} key - The primary key of the item to delete.
- * @returns {Promise<object>} A confirmation message.
- */
 export const deleteItem = async (tableName, key) => {
   const params = { TableName: tableName, Key: key };
   try {
@@ -55,28 +46,31 @@ export const deleteItem = async (tableName, key) => {
 };
 
 /**
- * Generates and seeds a large, realistic dataset for a full CIS degree program.
- * NOTE: This is a placeholder. A real implementation would be much more complex.
+ * Inserts or updates a batch of courses into the CourseDatabase.
+ * @param {Array<object>} courses - An array of course objects.
  * @returns {Promise<object>} A confirmation message.
  */
-export const generateMassiveData = async () => {
-    // This is a simplified example. A real one would generate ~40 courses.
-    const massCourses = [
-        { Subject: 'CS', CourseNumber: 1013, Name: 'Programming I', Credits: 3},
-        { Subject: 'CS', CourseNumber: 1023, Name: 'Programming II', Credits: 3, Prerequisites: [{Subject: 'CS', CourseNumber: 1013}]},
-        // ... add many more courses
-    ];
-    const massRules = [
-        { MajorCode: 'CS', RequirementType: 'CORE', TotalCreditsRequired: 60, Courses: massCourses.map(c => ({Subject: c.Subject, CourseNumber: c.CourseNumber}))},
-        // ... add elective, general ed rules etc.
-    ];
+export const bulkInsertCourses = async (courses) => {
+  const putRequests = courses.map(course => ({
+    PutRequest: {
+      Item: course,
+    },
+  }));
 
-    const params = {
+  const chunks = chunkArray(putRequests, 25); // DynamoDB BatchWrite limit is 25 items per request
+  
+  try {
+    for (const chunk of chunks) {
+      const params = {
         RequestItems: {
-            'CourseDatabase': massCourses.map(Item => ({ PutRequest: { Item } })),
-            'DegreeRequirements': massRules.map(Item => ({ PutRequest: { Item } })),
-        }
-    };
-    await docClient.send(new BatchWriteCommand(params));
-    return { message: `Successfully generated and seeded a full degree program.` };
+          'CourseDatabase': chunk,
+        },
+      };
+      await docClient.send(new BatchWriteCommand(params));
+    }
+    return { message: `Successfully uploaded ${courses.length} courses.` };
+  } catch (error) {
+    console.error('DynamoDB Error during bulk course insert:', error);
+    throw new Error('Could not insert courses into database.');
+  }
 };

@@ -45,3 +45,16 @@ export const generateData = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const bulkUploadCourses = async (req, res) => {
+  try {
+    const { courses } = req.body;
+    if (!Array.isArray(courses)) {
+      return res.status(400).json({ message: 'Request body must include an array of "courses".' });
+    }
+    const result = await devToolsService.bulkInsertCourses(courses);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
