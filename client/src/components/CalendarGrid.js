@@ -21,6 +21,9 @@ const generateTimeSlots = (startHour, endHour, interval) => {
   return slots;
 };
 
+// --- THIS IS THE FIX (Part 1) ---
+// Define a constant for the height of each minute in pixels.
+const MINUTE_HEIGHT = 1; // 1px per minute
 
 const CalendarGrid = ({ events = [], onRemoveEvent }) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -29,33 +32,27 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
   let endHour = 18;
 
   if (events.length > 0) {
-      let minHour = 24;
-      let maxHour = 0;
+    let minMinutes = timeToMinutes(`${startHour}:00`);
+    let maxMinutes = timeToMinutes(`${endHour}:00`);
 
-      events.forEach(event => {
-          if (event.Schedule?.StartTime) {
-              const eventStartHour = parseInt(event.Schedule.StartTime.split(':')[0], 10);
-              if (eventStartHour < minHour) {
-                  minHour = eventStartHour;
-              }
-          }
-          if (event.Schedule?.EndTime) {
-              // --- THIS IS THE FIX (Part 1) ---
-              // Calculate the ending hour based on total minutes to correctly handle half-hours.
-              const eventEndHour = Math.ceil(timeToMinutes(event.Schedule.EndTime) / 60);
-              if (eventEndHour > maxHour) {
-                  maxHour = eventEndHour;
-              }
-          }
-      });
-      
-      startHour = Math.min(startHour, minHour - 1);
-      endHour = Math.max(endHour, maxHour + 1);
+    events.forEach(event => {
+      if (event.Schedule?.StartTime) {
+        minMinutes = Math.min(minMinutes, timeToMinutes(event.Schedule.StartTime));
+      }
+      if (event.Schedule?.EndTime) {
+        maxMinutes = Math.max(maxMinutes, timeToMinutes(event.Schedule.EndTime));
+      }
+    });
+
+    const earliestHour = Math.floor(minMinutes / 60);
+    const latestHour = Math.ceil(maxMinutes / 60);
+    
+    startHour = Math.max(0, earliestHour - 1);
+    endHour = Math.min(24, latestHour + 1);
   }
 
   const timeSlots = generateTimeSlots(startHour, endHour, 30);
   const gridStartMinutes = timeToMinutes(`${String(startHour).padStart(2, '0')}:00`);
-  const totalMinutes = timeToMinutes(`${String(endHour).padStart(2, '0')}:00`) - gridStartMinutes;
 
   return (
     <div style={styles.gridContainer}>
@@ -76,6 +73,8 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
                 return <div key={time} style={{...styles.hourLine, ...(isHalfHour ? styles.halfHourLine : {})}}></div>
             })}
             
+            {/* --- THIS IS THE FIX (Part 2) --- */}
+            {/* Calculate top and height in pixels based on MINUTE_HEIGHT */}
             {events.map((event, index) => {
               const dayAbbreviation = { 'Sunday': 'U', 'Monday': 'M', 'Tuesday': 'T', 'Wednesday': 'W', 'Thursday': 'R', 'Friday': 'F', 'Saturday': 'S' }[day];
               if (!event.Schedule || !event.Schedule.Days || typeof event.Schedule.Days !== 'string' || !event.Schedule.Days.includes(dayAbbreviation)) {
@@ -84,13 +83,11 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
               
               const startMinutes = timeToMinutes(event.Schedule.StartTime);
               const endMinutes = timeToMinutes(event.Schedule.EndTime);
-              const top = totalMinutes > 0 ? ((startMinutes - gridStartMinutes) / totalMinutes) * 100 : 0;
-              const height = totalMinutes > 0 ? ((endMinutes - startMinutes) / totalMinutes) * 100 : 0;
-
-              if (top < 0 || top >= 100) return null;
+              const top = (startMinutes - gridStartMinutes) * MINUTE_HEIGHT;
+              const height = (endMinutes - startMinutes) * MINUTE_HEIGHT;
 
               return (
-                <div key={event.id || index} style={{...styles.event, top: `${top}%`, height: `${height}%`, backgroundColor: event.color || '#005826'}}>
+                <div key={event.id || index} style={{...styles.event, top: `${top}px`, height: `${height}px`, backgroundColor: event.color || '#005826'}}>
                   <button onClick={(e) => { e.stopPropagation(); onRemoveEvent(event); }} style={styles.removeButton}>&times;</button>
                   <strong>{event.Subject} {event.CourseNumber}</strong>
                   <div>{event.Name}</div>
@@ -105,11 +102,12 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
   );
 };
 
+// --- THIS IS THE FIX (Part 3) ---
 const styles = {
     gridContainer: { display: 'flex', border: '1px solid #e0e0e0', backgroundColor: '#ffffff', fontFamily: 'sans-serif' },
     timeGutter: { paddingTop: '30px', borderRight: '1px solid #e0e0e0' },
     timeSlotLabel: {
-        height: '30px',
+        height: `${30 * MINUTE_HEIGHT}px`, // 30 minutes * height per minute
         textAlign: 'right', padding: '0 10px',
         fontSize: '12px', color: '#777', position: 'relative', top: '-8px',
         boxSizing: 'border-box',
@@ -121,13 +119,12 @@ const styles = {
         fontWeight: 'bold', borderBottom: '1px solid #e0e0e0', height: '20px',
     },
     hourLine: {
-        height: '30px',
+        height: `${30 * MINUTE_HEIGHT}px`, // 30 minutes * height per minute
         borderBottom: '1px solid #eee',
         boxSizing: 'border-box',
     },
     halfHourLine: {
-        // --- THIS IS THE FIX (Part 2) ---
-        borderBottom: '1px dotted #f5f5f5', // Made the line color even lighter
+        borderBottom: '1px dotted #f8f8f8',
     },
     event: {
         position: 'absolute',
