@@ -14,6 +14,10 @@ export const tableSchemas = {
       { key: 'Name', label: 'Course Name', type: 'text', readOnly: false },
       { key: 'Credits', label: 'Credits', type: 'number', readOnly: false },
       { key: 'Prerequisites', label: 'Prerequisites', type: 'courseSelector', readOnly: false },
+       // --- NEW: Add schedule fields to the schema ---
+      { key: 'Schedule.Days', label: 'Days', type: 'daySelector', readOnly: false },
+      { key: 'Schedule.StartTime', label: 'Start Time', type: 'timePicker', readOnly: false },
+      { key: 'Schedule.EndTime', label: 'End Time', type: 'timePicker', readOnly: false },
     ],
   },
   StudentDatabase: {

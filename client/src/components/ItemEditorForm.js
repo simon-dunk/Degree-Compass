@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { upsertItem } from '../api/devToolsApi';
 import CourseSelector from './CourseSelector';
 import StyledInput from './StyledInput';
+import DaySelector from './DaySelector';
+import TimePicker24Hour from './TimePicker24Hour';
 
 const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }) => {
   const [formData, setFormData] = useState({});
@@ -12,16 +14,27 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
       setFormData(selectedItem);
       setFormMode('edit');
     } else {
-      // Clear form data but preserve the table context
-      setFormData({});
+      const initialData = activeTable === 'CourseDatabase' 
+        ? { Schedule: { Days: '', StartTime: '08:00', EndTime: '09:00' }, Prerequisites: [] } 
+        : {};
+      setFormData(initialData);
       setFormMode('add');
     }
   }, [selectedItem, activeTable]);
 
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleScheduleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      Schedule: {
+        ...prev.Schedule,
+        [field]: value,
+      }
+    }));
   };
 
   const handlePrereqChange = (prereqs) => {
@@ -32,7 +45,7 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
     e.preventDefault();
     try {
       const itemToSave = { ...formData };
-
+      
       if (itemToSave.StudentId) itemToSave.StudentId = parseInt(itemToSave.StudentId, 10);
       if (itemToSave.CourseNumber) itemToSave.CourseNumber = parseInt(itemToSave.CourseNumber, 10);
       if (itemToSave.Credits) itemToSave.Credits = parseInt(itemToSave.Credits, 10);
@@ -42,11 +55,9 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
         itemToSave.Major = itemToSave.Major.split(',').map(s => s.trim());
       }
       
-      // Ensure prerequisites are set, even if empty
       if (activeTable === 'CourseDatabase' && !itemToSave.Prerequisites) {
         itemToSave.Prerequisites = [];
       }
-
 
       await upsertItem(activeTable, itemToSave);
       alert(`Item successfully ${formMode === 'add' ? 'added' : 'updated'}!`);
@@ -67,7 +78,7 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
             <StyledInput name="Major" value={formData.Major || ''} onChange={handleInputChange} placeholder="Majors (comma-separated)" />
           </div>
         );
-      case 'CourseDatabase': // --- UPDATE COURSE FORM ---
+      case 'CourseDatabase':
         return (
           <>
             <div style={styles.fieldGrid}>
@@ -75,6 +86,12 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
                 <StyledInput name="CourseNumber" value={formData.CourseNumber || ''} onChange={handleInputChange} placeholder="Course Number" />
                 <StyledInput name="Name" value={formData.Name || ''} onChange={handleInputChange} placeholder="Course Name" />
                 <StyledInput name="Credits" value={formData.Credits || ''} onChange={handleInputChange} placeholder="Credits" />
+            </div>
+            <h4>Schedule</h4>
+            <div style={{...styles.fieldGrid, ...styles.scheduleGrid}}>
+                <DaySelector selectedDays={formData.Schedule?.Days || ''} onDayChange={(days) => handleScheduleChange('Days', days)} />
+                <TimePicker24Hour value={formData.Schedule?.StartTime || '08:00'} onChange={(e) => handleScheduleChange('StartTime', e.target.value)} />
+                <TimePicker24Hour value={formData.Schedule?.EndTime || '09:00'} onChange={(e) => handleScheduleChange('EndTime', e.target.value)} />
             </div>
             <h4>Prerequisites</h4>
             <CourseSelector selectedCourses={formData.Prerequisites || []} onChange={handlePrereqChange} />
@@ -104,10 +121,10 @@ const ItemEditorForm = ({ activeTable, selectedItem, onActionComplete, onClear }
   );
 };
 
-// --- STYLES ---
 const styles = {
     form: { display: 'flex', flexDirection: 'column', gap: '1rem' },
     fieldGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' },
+    scheduleGrid: { gridTemplateColumns: '2fr 1fr 1fr', alignItems: 'center' },
     buttonContainer: { display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' },
     button: {
         backgroundColor: '#005826', color: 'white', padding: '10px 20px', border: 'none',

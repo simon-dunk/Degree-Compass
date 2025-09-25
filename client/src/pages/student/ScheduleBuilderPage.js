@@ -6,13 +6,36 @@ import { formatTime12Hour } from '../../utils/formatters';
 import { fetchAllCourses } from '../../api/api';
 
 const PRESET_COLORS = [
-  '#005826', // Primary Green
-  '#007bff', // Blue
-  '#6f42c1', // Indigo
-  '#d9534f', // Red
-  '#f0ad4e', // Orange
-  '#5cb85c', // Green
+  '#005826', '#007bff', '#6f42c1', '#d9534f', '#f0ad4e', '#5cb85c',
 ];
+
+// --- NEW: Helper function to check for time overlaps ---
+const timeToMinutes = (timeStr) => {
+  if (!timeStr || typeof timeStr !== 'string') return 0;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return (hours || 0) * 60 + (minutes || 0);
+};
+
+const doSchedulesOverlap = (scheduleA, scheduleB) => {
+    // 1. Check for common days
+    const daysA = scheduleA.Days.split('');
+    const daysB = scheduleB.Days.split('');
+    const hasCommonDay = daysA.some(day => daysB.includes(day));
+
+    if (!hasCommonDay) {
+        return false; // No overlap if they are on different days
+    }
+
+    // 2. Convert times to minutes for comparison
+    const startA = timeToMinutes(scheduleA.StartTime);
+    const endA = timeToMinutes(scheduleA.EndTime);
+    const startB = timeToMinutes(scheduleB.StartTime);
+    const endB = timeToMinutes(scheduleB.EndTime);
+    
+    // 3. Check for time overlap on common days
+    // Overlap exists if one event starts before the other ends, AND ends after the other starts.
+    return startA < endB && endA > startB;
+};
 
 
 const ScheduleBuilderPage = () => {
@@ -29,10 +52,6 @@ const ScheduleBuilderPage = () => {
         setError(null);
         setIsLoading(true);
         const courses = await fetchAllCourses();
-        console.log(courses)
-        
-        // --- THIS IS THE FIX ---
-        // Filter courses to only include those with valid schedule information
         const schedulableCourses = courses.filter(c => 
             c.Schedule && c.Schedule.Days && c.Schedule.StartTime && c.Schedule.EndTime
         );
@@ -56,12 +75,24 @@ const ScheduleBuilderPage = () => {
     const eventId = eventToAdd.id || `${eventToAdd.Subject}-${eventToAdd.CourseNumber}`;
     const isAlreadyScheduled = scheduledEvents.some(e => (e.id || `${e.Subject}-${e.CourseNumber}`) === eventId);
 
-    if (!isAlreadyScheduled) {
-      const newEvent = { ...eventToAdd, color: selectedColor, id: eventId };
-      setScheduledEvents([...scheduledEvents, newEvent]);
-    } else {
+    if (isAlreadyScheduled) {
       alert(`${eventToAdd.Subject} ${eventToAdd.CourseNumber} is already on the schedule.`);
+      return;
     }
+
+    // --- NEW: Overlap detection logic ---
+    for (const existingEvent of scheduledEvents) {
+        if (doSchedulesOverlap(eventToAdd.Schedule, existingEvent.Schedule)) {
+            const existingEventName = existingEvent.id.startsWith('custom-') 
+                ? existingEvent.Name 
+                : `${existingEvent.Subject} ${existingEvent.CourseNumber}`;
+            alert(`Error: This event overlaps with ${existingEventName}.`);
+            return; // Stop the function and don't add the event
+        }
+    }
+
+    const newEvent = { ...eventToAdd, color: selectedColor, id: eventId };
+    setScheduledEvents([...scheduledEvents, newEvent]);
   };
 
   const handleRemoveEvent = (eventToRemove) => {
@@ -138,7 +169,6 @@ const ScheduleBuilderPage = () => {
   );
 };
 
-// --- Updated Styles ---
 const styles = {
     container: { display: 'flex', height: 'calc(100vh - 80px)' },
     sidebar: {

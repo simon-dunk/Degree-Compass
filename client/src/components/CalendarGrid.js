@@ -1,7 +1,6 @@
 import React from 'react';
 import { formatTime12Hour, formatTimeSimple12Hour } from '../utils/formatters';
 
-// --- Helper Functions (Defined outside and before the component) ---
 const timeToMinutes = (timeStr) => {
   if (!timeStr || typeof timeStr !== 'string') return 0;
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -21,48 +20,61 @@ const generateTimeSlots = (startHour, endHour, interval) => {
   }
   return slots;
 };
-// --- End Helper Functions ---
 
 
 const CalendarGrid = ({ events = [], onRemoveEvent }) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  // --- Dynamic Time Range Logic ---
   let startHour = 8;
   let endHour = 18;
 
-  events.forEach(event => {
-    if (event.Schedule?.StartTime) {
-      const eventStartHour = parseInt(event.Schedule.StartTime.split(':')[0], 10);
-      if (eventStartHour < startHour) {
-        startHour = eventStartHour;
-      }
-    }
-    if (event.Schedule?.EndTime) {
-      const eventEndHour = Math.ceil(parseInt(event.Schedule.EndTime.split(':')[0], 10));
-      if (eventEndHour >= endHour) {
-        endHour = eventEndHour + 1;
-      }
-    }
-  });
+  if (events.length > 0) {
+      let minHour = 24;
+      let maxHour = 0;
 
-  const timeSlots = generateTimeSlots(startHour, endHour, 60);
+      events.forEach(event => {
+          if (event.Schedule?.StartTime) {
+              const eventStartHour = parseInt(event.Schedule.StartTime.split(':')[0], 10);
+              if (eventStartHour < minHour) {
+                  minHour = eventStartHour;
+              }
+          }
+          if (event.Schedule?.EndTime) {
+              // --- THIS IS THE FIX (Part 1) ---
+              // Calculate the ending hour based on total minutes to correctly handle half-hours.
+              const eventEndHour = Math.ceil(timeToMinutes(event.Schedule.EndTime) / 60);
+              if (eventEndHour > maxHour) {
+                  maxHour = eventEndHour;
+              }
+          }
+      });
+      
+      startHour = Math.min(startHour, minHour - 1);
+      endHour = Math.max(endHour, maxHour + 1);
+  }
+
+  const timeSlots = generateTimeSlots(startHour, endHour, 30);
   const gridStartMinutes = timeToMinutes(`${String(startHour).padStart(2, '0')}:00`);
   const totalMinutes = timeToMinutes(`${String(endHour).padStart(2, '0')}:00`) - gridStartMinutes;
 
   return (
     <div style={styles.gridContainer}>
       <div style={styles.timeGutter}>
-        {/* --- THIS IS THE FIX --- */}
-        {/* It now correctly uses the simple formatter for the side labels */}
-        {timeSlots.map(time => <div key={time} style={styles.timeSlotLabel}>{formatTimeSimple12Hour(time)}</div>)}
+        {timeSlots.map(time => (
+            <div key={time} style={styles.timeSlotLabel}>
+                {formatTimeSimple12Hour(time)}
+            </div>
+        ))}
       </div>
 
       <div style={styles.daysContainer}>
         {days.map(day => (
           <div key={day} style={styles.dayColumn}>
             <div style={styles.dayHeader}>{day.substring(0, 3)}</div>
-            {timeSlots.map(time => <div key={time} style={styles.hourLine}></div>)}
+            {timeSlots.map(time => {
+                const isHalfHour = time.endsWith(':30');
+                return <div key={time} style={{...styles.hourLine, ...(isHalfHour ? styles.halfHourLine : {})}}></div>
+            })}
             
             {events.map((event, index) => {
               const dayAbbreviation = { 'Sunday': 'U', 'Monday': 'M', 'Tuesday': 'T', 'Wednesday': 'W', 'Thursday': 'R', 'Friday': 'F', 'Saturday': 'S' }[day];
@@ -93,13 +105,14 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
   );
 };
 
-// --- STYLES ---
 const styles = {
     gridContainer: { display: 'flex', border: '1px solid #e0e0e0', backgroundColor: '#ffffff', fontFamily: 'sans-serif' },
     timeGutter: { paddingTop: '30px', borderRight: '1px solid #e0e0e0' },
     timeSlotLabel: {
-        height: '60px', textAlign: 'right', padding: '0 10px',
+        height: '30px',
+        textAlign: 'right', padding: '0 10px',
         fontSize: '12px', color: '#777', position: 'relative', top: '-8px',
+        boxSizing: 'border-box',
     },
     daysContainer: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flexGrow: 1 },
     dayColumn: { position: 'relative', borderRight: '1px solid #e0e0e0', },
@@ -108,9 +121,13 @@ const styles = {
         fontWeight: 'bold', borderBottom: '1px solid #e0e0e0', height: '20px',
     },
     hourLine: {
-        height: '60px',
+        height: '30px',
         borderBottom: '1px solid #eee',
         boxSizing: 'border-box',
+    },
+    halfHourLine: {
+        // --- THIS IS THE FIX (Part 2) ---
+        borderBottom: '1px dotted #f5f5f5', // Made the line color even lighter
     },
     event: {
         position: 'absolute',
