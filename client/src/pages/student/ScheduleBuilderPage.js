@@ -37,12 +37,12 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
   const [activeScheduleIndex, setActiveScheduleIndex] = useState(0);
   const [isEditing, setIsEditing] = useState([true]);
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [editingTab, setEditingTab] = useState({ index: -1, name: '' });
   
   const [coursePool, setCoursePool] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // --- NEW: State to manage hover effect for edit buttons ---
   const [hoveredEditIndex, setHoveredEditIndex] = useState(null);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
   useEffect(() => {
     if (semesters && semesters.length > 0) {
       const importedSchedules = semesters.map(sem => 
-        sem.courses.map(course => ({...course, id: `${course.Subject}-${course.CourseNumber}`}))
+        sem.courses.map(course => ({...course, id: `${course.Subject}-${course.CourseNumber}`, color: PRESET_COLORS[0]}))
       );
       const importedInfo = semesters.map(sem => ({ name: sem.semester, isImported: true }));
       setAllSchedules(importedSchedules);
@@ -85,6 +85,19 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
     }
   }, [semesters]);
   
+  const handleColorClick = (color) => {
+    if (selectedEventId) {
+      setAllSchedules(prev => prev.map((schedule, index) => {
+        if (index === activeScheduleIndex) {
+          return schedule.map(event => event.id === selectedEventId ? { ...event, color } : event);
+        }
+        return schedule;
+      }));
+    } else {
+      setSelectedColor(color);
+    }
+  };
+
   const handleAddEvent = (eventToAdd) => {
     setAllSchedules(prevSchedules => {
       const newSchedules = [...prevSchedules];
@@ -136,6 +149,23 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
     });
   };
 
+  const handleTabNameDoubleClick = (index, name) => {
+    setEditingTab({ index, name });
+  };
+  
+  const handleTabNameChange = (e) => {
+    setEditingTab(prev => ({...prev, name: e.target.value }));
+  };
+
+  const handleTabNameSave = (index) => {
+    setScheduleInfo(prev => prev.map((info, i) => i === index ? {...info, name: editingTab.name} : info));
+    setEditingTab({ index: -1, name: '' });
+  };
+
+  const handleSelectEvent = (eventId) => {
+    setSelectedEventId(prevId => (prevId === eventId ? null : eventId));
+  };
+  
   const currentEvents = allSchedules[activeScheduleIndex] || [];
   const isCurrentTabEditable = isEditing[activeScheduleIndex];
 
@@ -150,7 +180,7 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
                   <span style={{fontWeight: 'bold'}}>Event Color:</span>
                   <div style={styles.colorPalette}>
                       {PRESET_COLORS.map(color => (
-                          <button key={color} style={{...styles.colorSwatch, backgroundColor: color, ...(selectedColor === color ? styles.activeColorSwatch : {})}} onClick={() => setSelectedColor(color)} title={`Select color ${color}`} />
+                          <button key={color} style={{...styles.colorSwatch, backgroundColor: color, ...(selectedColor === color ? styles.activeColorSwatch : {})}} onClick={() => handleColorClick(color)} title={`Select color ${color}`} />
                       ))}
                   </div>
               </div>
@@ -170,7 +200,7 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
           ) : (
             <>
               <h2>Add Custom Events</h2>
-              <p>This is a read-only view of your planned schedule. You can add temporary custom events to see how they fit, or click the edit button to make changes.</p>
+              <p>This is a read-only view. Click the edit icon to make changes or add custom events.</p>
               <CustomEventForm onAddEvent={handleAddEvent} />
             </>
           )}
@@ -189,27 +219,40 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
                         }
 
                         return (
-                            <button key={index} onClick={() => setActiveScheduleIndex(index)} style={activeScheduleIndex === index ? {...styles.tab, ...styles.activeTab} : styles.tab}>
-                                {info.name}
-                                {info.isImported && (
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); handleToggleEdit(index); }} 
-                                        style={buttonStyle}
-                                        onMouseEnter={() => setHoveredEditIndex(index)}
-                                        onMouseLeave={() => setHoveredEditIndex(null)}
-                                        title={isCurrentlyEditing ? "Lock Schedule" : "Edit Schedule"}
-                                    >
-                                        {isCurrentlyEditing ? 'Lock' : 'Edit'}
-                                    </button>
-                                )}
-                            </button>
+                            <div key={index} onDoubleClick={() => handleTabNameDoubleClick(index, info.name)} style={activeScheduleIndex === index ? {...styles.tab, ...styles.activeTab} : styles.tab} onClick={() => setActiveScheduleIndex(index)}>
+                              {editingTab.index === index ? (
+                                <input 
+                                  type="text" 
+                                  value={editingTab.name} 
+                                  onChange={handleTabNameChange} 
+                                  onBlur={() => handleTabNameSave(index)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleTabNameSave(index)}
+                                  autoFocus
+                                  style={styles.tabInput}
+                                />
+                              ) : (
+                                <span>{info.name}</span>
+                              )}
+                              
+                              {info.isImported && (
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleToggleEdit(index); }} 
+                                  style={buttonStyle}
+                                  onMouseEnter={() => setHoveredEditIndex(index)}
+                                  onMouseLeave={() => setHoveredEditIndex(null)}
+                                  title={isCurrentlyEditing ? "Lock Schedule" : "Edit Schedule"}
+                                >
+                                  {isCurrentlyEditing ? 'Lock' : 'Edit'}
+                                </button>
+                              )}
+                            </div>
                         )
                     })}
                 </div>
                 <button onClick={handleAddScheduleTab} style={styles.addTabButton} title="Add New Schedule Tab">+</button>
             </div>
             
-            <CalendarGrid events={currentEvents} onRemoveEvent={handleRemoveEvent} />
+            <CalendarGrid events={currentEvents} onRemoveEvent={handleRemoveEvent} selectedEventId={selectedEventId} onSelectEvent={handleSelectEvent} />
         </div>
         <style>{`.courseItem:hover { background-color: #f0f0f0; border-color: #005826; }`}</style>
     </div>
@@ -234,6 +277,7 @@ const styles = {
     tabs: { display: 'flex', flexGrow: 1 },
     tab: { padding: '10px 15px', cursor: 'pointer', border: 'none', backgroundColor: 'transparent', fontSize: '1rem', color: '#555', borderBottom: '3px solid transparent', display: 'flex', alignItems: 'center', gap: '10px' },
     activeTab: { borderBottom: '3px solid #005826', fontWeight: 'bold', color: '#000' },
+    tabInput: { border: 'none', background: '#f0f0f0', padding: '4px', borderRadius: '3px', outline: '1px solid #005826'},
     addTabButton: { fontSize: '1.5rem', fontWeight: 'bold', border: 'none', backgroundColor: '#f0f0f0', cursor: 'pointer', padding: '0 15px', borderRadius: '5px', marginLeft: '10px', height: '40px' },
     editButton: { fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px', border: '1px solid #6c757d', backgroundColor: 'transparent', color: '#6c757d', cursor: 'pointer', transition: 'background-color 0.2s, color 0.2s' },
     lockButton: { fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px', border: '1px solid #005826', backgroundColor: 'transparent', color: '#005826', cursor: 'pointer', transition: 'background-color 0.2s, color 0.2s' },
