@@ -6,13 +6,15 @@ import RulesPage from '../pages/admin/RulesPage';
 import OverridesPage from '../pages/admin/OverridesPage';
 import DevToolsPage from '../pages/dev/DevToolsPage';
 
-const Layout = () => {
+const Layout = ({ semestersToSchedule, setSemestersToSchedule }) => {
   const [currentPage, setCurrentPage] = useState('planner');
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'planner': return <PlannerPage />;
-      case 'schedule': return <ScheduleBuilderPage />;
+      case 'planner': 
+        return <PlannerPage setSemestersToSchedule={setSemestersToSchedule} setCurrentPage={setCurrentPage} />;
+      case 'schedule': 
+        return <ScheduleBuilderPage semesters={semestersToSchedule} />;
       case 'rules': return <RulesPage />;
       case 'overrides': return <OverridesPage />;
       case 'dev': return <DevToolsPage />;

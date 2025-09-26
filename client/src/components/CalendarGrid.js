@@ -21,11 +21,9 @@ const generateTimeSlots = (startHour, endHour, interval) => {
   return slots;
 };
 
-// --- THIS IS THE FIX (Part 1) ---
-// Define a constant for the height of each minute in pixels.
-const MINUTE_HEIGHT = 1; // 1px per minute
+const MINUTE_HEIGHT = 1;
 
-const CalendarGrid = ({ events = [], onRemoveEvent }) => {
+const CalendarGrid = ({ events = [], onRemoveEvent, selectedEventId, onSelectEvent }) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   let startHour = 8;
@@ -55,7 +53,7 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
   const gridStartMinutes = timeToMinutes(`${String(startHour).padStart(2, '0')}:00`);
 
   return (
-    <div style={styles.gridContainer}>
+    <div style={styles.gridContainer} onClick={() => onSelectEvent(null)}>
       <div style={styles.timeGutter}>
         {timeSlots.map(time => (
             <div key={time} style={styles.timeSlotLabel}>
@@ -73,8 +71,6 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
                 return <div key={time} style={{...styles.hourLine, ...(isHalfHour ? styles.halfHourLine : {})}}></div>
             })}
             
-            {/* --- THIS IS THE FIX (Part 2) --- */}
-            {/* Calculate top and height in pixels based on MINUTE_HEIGHT */}
             {events.map((event, index) => {
               const dayAbbreviation = { 'Sunday': 'U', 'Monday': 'M', 'Tuesday': 'T', 'Wednesday': 'W', 'Thursday': 'R', 'Friday': 'F', 'Saturday': 'S' }[day];
               if (!event.Schedule || !event.Schedule.Days || typeof event.Schedule.Days !== 'string' || !event.Schedule.Days.includes(dayAbbreviation)) {
@@ -85,9 +81,18 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
               const endMinutes = timeToMinutes(event.Schedule.EndTime);
               const top = (startMinutes - gridStartMinutes) * MINUTE_HEIGHT;
               const height = (endMinutes - startMinutes) * MINUTE_HEIGHT;
+              
+              const isSelected = event.id === selectedEventId;
+              const eventStyle = {
+                  ...styles.event, 
+                  top: `${top}px`, 
+                  height: `${height}px`, 
+                  backgroundColor: event.color || '#005826',
+                  ...(isSelected ? styles.selectedEvent : {})
+              };
 
               return (
-                <div key={event.id || index} style={{...styles.event, top: `${top}px`, height: `${height}px`, backgroundColor: event.color || '#005826'}}>
+                <div key={event.id || index} style={eventStyle} onClick={(e) => { e.stopPropagation(); onSelectEvent(event.id); }}>
                   <button onClick={(e) => { e.stopPropagation(); onRemoveEvent(event); }} style={styles.removeButton}>&times;</button>
                   <strong>{event.Subject} {event.CourseNumber}</strong>
                   <div>{event.Name}</div>
@@ -102,12 +107,11 @@ const CalendarGrid = ({ events = [], onRemoveEvent }) => {
   );
 };
 
-// --- THIS IS THE FIX (Part 3) ---
 const styles = {
     gridContainer: { display: 'flex', border: '1px solid #e0e0e0', backgroundColor: '#ffffff', fontFamily: 'sans-serif' },
     timeGutter: { paddingTop: '30px', borderRight: '1px solid #e0e0e0' },
     timeSlotLabel: {
-        height: `${30 * MINUTE_HEIGHT}px`, // 30 minutes * height per minute
+        height: `${30 * MINUTE_HEIGHT}px`,
         textAlign: 'right', padding: '0 10px',
         fontSize: '12px', color: '#777', position: 'relative', top: '-8px',
         boxSizing: 'border-box',
@@ -119,7 +123,7 @@ const styles = {
         fontWeight: 'bold', borderBottom: '1px solid #e0e0e0', height: '20px',
     },
     hourLine: {
-        height: `${30 * MINUTE_HEIGHT}px`, // 30 minutes * height per minute
+        height: `${30 * MINUTE_HEIGHT}px`,
         borderBottom: '1px solid #eee',
         boxSizing: 'border-box',
     },
@@ -127,30 +131,20 @@ const styles = {
         borderBottom: '1px dotted #f8f8f8',
     },
     event: {
-        position: 'absolute',
-        left: '5px',
-        right: '5px',
-        borderRadius: '5px',
-        padding: '5px',
-        color: 'white',
-        fontSize: '12px',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        cursor: 'pointer',
+        position: 'absolute', left: '5px', right: '5px',
+        borderRadius: '5px', padding: '5px', color: 'white',
+        fontSize: '12px', overflow: 'hidden', boxSizing: 'border-box',
+        border: '2px solid transparent', cursor: 'pointer',
+    },
+    selectedEvent: {
+        borderColor: 'white',
+        boxShadow: '0 0 0 2px #005826',
     },
     removeButton: {
-        position: 'absolute',
-        top: '2px',
-        right: '5px',
-        background: 'transparent',
-        border: 'none',
-        color: 'white',
-        fontSize: '16px',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        opacity: 0.6,
-        lineHeight: 1,
+        position: 'absolute', top: '2px', right: '5px',
+        background: 'transparent', border: 'none', color: 'white',
+        fontSize: '16px', fontWeight: 'bold', cursor: 'pointer',
+        opacity: 0.6, lineHeight: 1,
     }
 };
 

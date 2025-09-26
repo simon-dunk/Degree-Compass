@@ -62,7 +62,7 @@ const PinnableCourseList = ({ title, courses, pinnedCourses, onPinToggle, eligib
   };
 
 
-const PlannerPage = () => {
+const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
   const [auditReport, setAuditReport] = useState(null);
   const [lockedSemesters, setLockedSemesters] = useState([]);
   const [suggestedNextSemester, setSuggestedNextSemester] = useState(null);
@@ -272,6 +272,15 @@ const PlannerPage = () => {
       return !plannedCourseIds.has(courseId);
   }) || [];
 
+  const handleSendToScheduler = () => {
+    if (lockedSemesters.length > 0) {
+      setSemestersToSchedule(lockedSemesters);
+      setCurrentPage('schedule'); // Navigate to the schedule builder page
+    } else {
+      alert("Please lock in at least one semester before sending to the scheduler.");
+    }
+  };
+
   return (
     <div style={styles.container}>
       {error && <p style={styles.errorText}>{error}</p>}
@@ -422,6 +431,9 @@ const PlannerPage = () => {
                     <button onClick={handleGenerateNextSemester} disabled={!auditReport || isGenerating} style={styles.button}>
                         {isGenerating ? 'Generating...' : 'Generate Next Semester'}
                     </button>
+                    <button onClick={handleSendToScheduler} disabled={lockedSemesters.length === 0} style={{...styles.button, ...styles.sendButton}}>
+                      Send Plan to Scheduler
+                    </button>
                     <button onClick={() => { setLockedSemesters([]); setSuggestedNextSemester(null); }} style={{...styles.button, ...styles.resetButton}}>
                         Reset Plan
                     </button>
@@ -481,6 +493,9 @@ const styles = {
       color: '#721c24', fontWeight: 'bold', backgroundColor: '#f8d7da',
       padding: '5px 10px', borderRadius: '15px', fontSize: '0.8rem'
     },
+    buttonGroup: { display: 'flex', gap: '1rem', width: '100%' },
+    sendButton: { backgroundColor: '#005826' },
+    resetButton: { backgroundColor: '#6c757d', marginTop: '1rem' },
     button: {
       padding: '12px 24px', fontSize: '1.1rem', cursor: 'pointer', border: 'none',
       borderRadius: '5px', backgroundColor: '#005826', color: 'white', flex: 1
