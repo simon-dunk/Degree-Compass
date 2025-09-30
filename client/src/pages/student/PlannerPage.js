@@ -493,9 +493,8 @@ const styles = {
       color: '#721c24', fontWeight: 'bold', backgroundColor: '#f8d7da',
       padding: '5px 10px', borderRadius: '15px', fontSize: '0.8rem'
     },
-    buttonGroup: { display: 'flex', gap: '1rem', width: '100%' },
     sendButton: { backgroundColor: '#005826' },
-    resetButton: { backgroundColor: '#6c757d', marginTop: '1rem' },
+    resetButton: { backgroundColor: '#6c757d' },
     button: {
       padding: '12px 24px', fontSize: '1.1rem', cursor: 'pointer', border: 'none',
       borderRadius: '5px', backgroundColor: '#005826', color: 'white', flex: 1
@@ -531,7 +530,6 @@ const styles = {
         borderBottom: '1px solid #eee'
     },
     buttonGroup: { display: 'flex', gap: '1rem', width: '100%' },
-    resetButton: { backgroundColor: '#6c757d' },
     lockButton: { backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' },
     deleteButton: { backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' },
     editableTitle: { cursor: 'pointer', margin: 0, padding: '5px', borderRadius: '3px', flexGrow: 1, fontSize: '1.1rem' },

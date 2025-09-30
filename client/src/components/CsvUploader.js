@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import StyledInput from './StyledInput'; 
+// import StyledInput from './StyledInput';
 
 const CsvUploader = ({ onUpload, onShowExample }) => {
   const [file, setFile] = useState(null);

@@ -8,7 +8,7 @@ import StyledDegreeRequirementDetails from '../../components/StyledDegreeRequire
 import StyledStudentDetails from '../../components/StyledStudentDetails';
 import ItemEditorForm from '../../components/ItemEditorForm';
 import CsvUploader from '../../components/CsvUploader';
-import { fetchTableContents, deleteItem, generateMassData, uploadCourses } from '../../api/devToolsApi';
+import { fetchTableContents, deleteItem, uploadCourses } from '../../api/devToolsApi';
 
 const TABLE_NAMES = ['CourseDatabase', 'StudentDatabase', 'DegreeRequirements'];
 
