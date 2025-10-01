@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   fetchStudentById,
   addStudentOverride,
@@ -8,9 +8,10 @@ import {
   fetchAllCourses,
   deleteCompletedCourse,
 } from '../../api/api';
-import StyledSelect from '../../components/StyledSelect';
 import StyledInput from '../../components/StyledInput';
+import StyledSelect from '../../components/StyledSelect';
 import CourseSelector from '../../components/CourseSelector';
+import SearchableSelect from '../../components/SearchableSelect'; // Import SearchableSelect
 
 const StudentManagerPage = () => {
   const [students, setStudents] = useState([]);
@@ -24,6 +25,14 @@ const StudentManagerPage = () => {
   const [subForCourses, setSubForCourses] = useState([]);
   const [newCompletedCourse, setNewCompletedCourse] = useState('');
   const [newGrade, setNewGrade] = useState('');
+
+  const courseOptions = useMemo(() => {
+    return allCourses.map(c => ({
+      value: `${c.Subject}-${c.CourseNumber}`,
+      label: `${c.Subject} ${c.CourseNumber} - ${c.Name}`
+    }));
+  }, [allCourses]);
+
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -168,17 +177,17 @@ const StudentManagerPage = () => {
           
           <div style={styles.formSection}>
             <h3>Add Completed Course</h3>
-            <form onSubmit={handleAddCompletedCourse} style={styles.addCourseForm}>
-              <StyledSelect value={newCompletedCourse} onChange={(e) => setNewCompletedCourse(e.target.value)}>
-                <option value="">-- Select a Course --</option>
-                {allCourses.map(c => (
-                  <option key={`${c.Subject}-${c.CourseNumber}`} value={`${c.Subject}-${c.CourseNumber}`}>
-                    {c.Subject} {c.CourseNumber} - {c.Name}
-                  </option>
-                ))}
-              </StyledSelect>
-              <StyledInput type="number" step="0.1" max="4.0" min="0.0" value={newGrade} onChange={(e) => setNewGrade(e.target.value)} placeholder="Grade (e.g., 4.0)" />
-              <button type="submit" style={styles.button}>Add Course</button>
+            <form onSubmit={handleAddCompletedCourse}>
+              <SearchableSelect
+                options={courseOptions}
+                value={newCompletedCourse}
+                onChange={(e) => setNewCompletedCourse(e.target.value)}
+                placeholder="Search courses to add..."
+              />
+              <div style={styles.addCourseForm}>
+                <StyledInput type="number" step="0.1" max="4.0" min="0.0" value={newGrade} onChange={(e) => setNewGrade(e.target.value)} placeholder="Grade (e.g., 4.0)" />
+                <button type="submit" style={styles.button}>Add Course</button>
+              </div>
             </form>
           </div>
 
@@ -189,7 +198,7 @@ const StudentManagerPage = () => {
                 {studentData.CompletedCourses.map((course, index) => (
                   <li key={index} style={styles.overrideItem}>
                     <span>
-                      {course.Subject} {course.CourseNumber}&nbsp;&nbsp;|&nbsp;&nbsp;Grade: {course.Grade}&nbsp;&nbsp;|&nbsp;&nbsp;Credits: {course.Credits || 'N/A'}
+                      <strong>{course.Subject} {course.CourseNumber}</strong> | Grade: {course.Grade} | Credits: {course.Credits || 'N/A'}
                     </span>
                     <button onClick={() => handleDeleteCompletedCourse(index)} style={{...styles.button, ...styles.deleteButton}}>Delete</button>
                   </li>
@@ -259,9 +268,10 @@ const styles = {
     },
     addCourseForm: {
         display: 'grid',
-        gridTemplateColumns: '2fr 1fr auto',
+        gridTemplateColumns: '1fr auto',
         gap: '1rem',
         alignItems: 'center',
+        marginTop: '1rem'
     }
   };
 

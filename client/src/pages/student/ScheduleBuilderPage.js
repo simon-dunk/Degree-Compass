@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import CalendarGrid from '../../components/CalendarGrid';
 import CustomEventForm from '../../components/CustomEventForm';
 import TimeTracker from '../../components/TimeTracker';
 import { formatTime12Hour } from '../../utils/formatters';
 import { fetchAllCourses } from '../../api/api';
+import StyledInput from '../../components/StyledInput';
 
 const PRESET_COLORS = [
   '#005826', '#007bff', '#6f42c1', '#d9534f', '#f0ad4e', '#5cb85c',
@@ -44,6 +45,18 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hoveredEditIndex, setHoveredEditIndex] = useState(null);
+  const [courseSearch, setCourseSearch] = useState('');
+
+  const filteredCoursePool = useMemo(() => {
+    if (!courseSearch) {
+      return coursePool;
+    }
+    return coursePool.filter(course => {
+      const searchTermLower = courseSearch.toLowerCase();
+      const courseText = `${course.Subject} ${course.CourseNumber} ${course.Name}`.toLowerCase();
+      return courseText.includes(searchTermLower);
+    });
+  }, [coursePool, courseSearch]);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -175,7 +188,13 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
           {isCurrentTabEditable ? (
             <>
               <h2>Course Pool</h2>
-              <p>Select a color, then click a course to add it to the schedule.</p>
+              <StyledInput
+                type="text"
+                placeholder="Search course pool..."
+                value={courseSearch}
+                onChange={(e) => setCourseSearch(e.target.value)}
+                style={{ marginBottom: '1rem' }}
+              />
               <div style={styles.colorPickerWrapper}>
                   <span style={{fontWeight: 'bold'}}>Event Color:</span>
                   <div style={styles.colorPalette}>
@@ -186,7 +205,7 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
               </div>
               <div style={styles.poolList}>
                   {isLoading ? <p>Loading courses...</p> : error ? <p style={{color: 'red'}}>{error}</p> : (
-                      coursePool.map(course => (
+                      filteredCoursePool.map(course => (
                           <div key={`${course.Subject}${course.CourseNumber}`} className="courseItem" style={styles.courseItem} onClick={() => handleAddEvent(course)} title={`Add ${course.Subject} ${course.CourseNumber} to schedule`}>
                               <div style={styles.courseTitle}><strong>{course.Subject} {course.CourseNumber}</strong><span style={styles.courseCredits}>{course.Credits} Credits</span></div>
                               <div style={styles.courseName}>{course.Name}</div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAllCourses } from '../api/api';
-import StyledSelect from './StyledSelect';
+import SearchableSelect from './SearchableSelect';
 
 const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) => {
   const [allCourses, setAllCourses] = useState([]);
@@ -32,17 +32,20 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
     onChange(currentCourses.filter(c => !(c.Subject === courseToRemove.Subject && c.CourseNumber === courseToRemove.CourseNumber)));
   };
 
+  const courseOptions = allCourses.map(c => ({
+    value: `${c.Subject}-${c.CourseNumber}`,
+    label: `${c.Subject} ${c.CourseNumber} - ${c.Name}`
+  }));
+
   return (
     <div style={styles.container}>
       <div style={styles.selectorRow}>
-        <StyledSelect value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} style={styles.select}>
-          <option value="">-- Select a course to add --</option>
-          {allCourses.map(c => (
-            <option key={`${c.Subject}-${c.CourseNumber}`} value={`${c.Subject}-${c.CourseNumber}`}>
-              {c.Subject} {c.CourseNumber} - {c.Name}
-            </option>
-          ))}
-        </StyledSelect>
+        <SearchableSelect
+          options={courseOptions}
+          value={selectedCourseId}
+          onChange={(e) => setSelectedCourseId(e.target.value)}
+          placeholder="Search courses..."
+        />
         <button type="button" onClick={handleAddCourse} style={styles.button}>Add</button>
       </div>
       <div style={styles.selectedList}>
@@ -57,14 +60,12 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
   );
 };
 
-// --- STYLES ---
 const styles = {
     container: { gridColumn: '1 / -1' },
     selectorRow: { display: 'flex', gap: '10px', marginBottom: '10px' },
-    select: { flexGrow: 1, padding: '10px', fontSize: '1rem', border: '1px solid #ccc', borderRadius: '5px' },
     button: {
         backgroundColor: '#005826', color: 'white', padding: '10px 20px', border: 'none',
-        borderRadius: '5px', cursor: 'pointer', fontSize: '1rem'
+        borderRadius: '5px', cursor: 'pointer', fontSize: '1rem', alignSelf: 'flex-end'
     },
     selectedList: { display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '40px' },
     chip: {
