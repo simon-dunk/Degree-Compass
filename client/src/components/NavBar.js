@@ -2,7 +2,7 @@ import React from 'react';
 
 const NavBar = ({ currentPage, setCurrentPage }) => {
   const studentPages = { planner: 'Student Planner', schedule: 'Schedule Builder' };
-  const adminPages = { rules: 'Rules Admin', overrides: 'Overrides Admin' };
+  const adminPages = { rules: 'Rules Admin', 'student-manager': 'Student Manager' };
   const devPages = { dev: 'Developer Tools' };
 
   return (

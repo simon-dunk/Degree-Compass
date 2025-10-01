@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchAuditReport, fetchAllStudents, generateNextSemester } from '../../api/api';
 import StyledSelect from '../../components/StyledSelect';
+import ProgressBar from '../../components/ProgressBar';
 
 const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
     if (!prerequisites || prerequisites.length === 0) return true;
@@ -13,11 +14,9 @@ const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
     });
 };
 
-// --- NEW: Helper Component for rendering the course lists with dividers ---
 const PinnableCourseList = ({ title, courses, pinnedCourses, onPinToggle, eligibleCourseIds }) => {
     if (!courses || courses.length === 0) return null;
   
-    // Sort courses by Subject, then CourseNumber
     const sortedCourses = [...courses].sort((a, b) => {
       if (a.Subject < b.Subject) return -1;
       if (a.Subject > b.Subject) return 1;
@@ -78,11 +77,17 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
   const [editingSemesterIndex, setEditingSemesterIndex] = useState(null);
   const [editingSemesterName, setEditingSemesterName] = useState('');
   const [pinnedElectives, setPinnedElectives] = useState([]);
+  const [totalCredits, setTotalCredits] = useState({ completed: 0, required: 0 });
 
-  const selectedStudentInfo = React.useMemo(() => {
+  const selectedStudentInfo = useMemo(() => {
     if (!selectedStudentId || students.length === 0) return null;
     return students.find(s => s.StudentId === parseInt(selectedStudentId, 10));
   }, [selectedStudentId, students]);
+  
+  const whatIfCompletedCredits = useMemo(() => {
+    const lockedCredits = lockedSemesters.reduce((acc, semester) => acc + semester.totalCredits, 0);
+    return totalCredits.completed + lockedCredits;
+  }, [lockedSemesters, totalCredits.completed]);
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -116,6 +121,11 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
       const report = await fetchAuditReport(selectedStudentId);
       setAuditReport(report);
       setRemainingRequirements(report.results || []);
+
+      const completed = (report.studentCompletedCourses || []).reduce((acc, course) => acc + (course.Credits || 3), 0);
+      const required = (report.results || []).reduce((acc, req) => acc + (req.TotalCreditsRequired || req.MinCredits || 0), 0);
+      setTotalCredits({ completed, required });
+
     } catch (err) {
       setError(`Failed to load degree audit: ${err.message}`);
       setAuditReport(null);
@@ -128,7 +138,6 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
     loadAuditReport();
   }, [loadAuditReport]);
 
-  // This useEffect hook is back to its original, working state
   useEffect(() => {
     if (!auditReport) return;
 
@@ -275,7 +284,7 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
   const handleSendToScheduler = () => {
     if (lockedSemesters.length > 0) {
       setSemestersToSchedule(lockedSemesters);
-      setCurrentPage('schedule'); // Navigate to the schedule builder page
+      setCurrentPage('schedule');
     } else {
       alert("Please lock in at least one semester before sending to the scheduler.");
     }
@@ -288,7 +297,25 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
         <div style={styles.mainGrid}>
             
             <div style={styles.column}>
-                <h2>Academic History</h2>
+                <h2>Academic Progress</h2>
+                <div style={{...styles.card, padding: '1rem 1.5rem', marginBottom: '1rem'}}>
+                  <h4>Overall Degree Progress</h4>
+                  <ProgressBar value={totalCredits.completed} max={totalCredits.required} />
+                  <div style={styles.progressText}>
+                    <span>{totalCredits.completed} / {totalCredits.required} Credits Completed</span>
+                  </div>
+                </div>
+                
+                {lockedSemesters.length > 0 && (
+                    <div style={{...styles.card, padding: '1rem 1.5rem', marginBottom: '1rem'}}>
+                        <h4>"What-If" Progress (with locked semesters)</h4>
+                        <ProgressBar value={whatIfCompletedCredits} max={totalCredits.required} color="rgb(40, 120, 42)" />
+                        <div style={styles.progressText}>
+                            <span>{whatIfCompletedCredits} / {totalCredits.required} Credits</span>
+                        </div>
+                    </div>
+                )}
+
                 {auditReport && (
                     <button onClick={() => setShowCompletedCourses(!showCompletedCourses)} style={styles.toggleButton}>
                         {showCompletedCourses ? 'Hide' : 'Show'} Completed Courses
@@ -301,7 +328,7 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
                     <ul style={{listStyle: 'none', padding: '0 1.5rem', maxHeight: '200px', overflowY: 'auto'}}>
                         {auditReport.studentCompletedCourses.map((course, index) => (
                         <li key={index} style={{padding: '0.5rem 0', borderBottom: '1px solid #eee'}}>
-                            {course.Subject} {course.CourseNumber} (Grade: {course.Grade})
+                            {course.Subject} {course.CourseNumber}&nbsp;&nbsp;|&nbsp;&nbsp;Grade: {course.Grade}&nbsp;&nbsp;|&nbsp;&nbsp;Credits: {course.Credits || 'N/A'}
                         </li>
                         ))}
                     </ul>
@@ -312,7 +339,7 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
                 {remainingRequirements.map((result) => (
                     <div key={result.requirementType} style={{...styles.card, marginBottom: '1rem'}}>
                         <div style={styles.cardHeader}>
-                            <h3>{result.requirementType}</h3>
+                            <h3>{result.RequirementType}</h3>
                             <span style={result.isSatisfied ? styles.statusMet : styles.statusNotMet}>
                                 {result.isSatisfied ? '✔ Satisfied' : '✖ Not Satisfied'}
                             </span>
@@ -445,7 +472,6 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
   );
 };
 
-// ... (styles remain the same)
 const styles = {
     container: { padding: '2rem', fontFamily: 'sans-serif', maxWidth: '1600px', margin: 'auto' },
     errorText: { color: 'red', backgroundColor: '#fbe9e7', padding: '10px', borderRadius: '5px' },
@@ -539,6 +565,12 @@ const styles = {
         fontSize: '1.1rem',
         fontWeight: 'bold',
         flexGrow: 1
+    },
+    progressText: {
+      textAlign: 'center',
+      marginTop: '5px',
+      fontSize: '0.9rem',
+      color: '#555'
     }
 };
 

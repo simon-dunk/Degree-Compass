@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { fetchAllCourses } from '../api/api';
 import StyledSelect from './StyledSelect';
 
-const CourseSelector = ({ selectedCourses, onChange }) => {
+const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) => {
   const [allCourses, setAllCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
 
-  // --- FIX: Ensure selectedCourses is always an array ---
   const currentCourses = Array.isArray(selectedCourses) ? selectedCourses : [];
 
   useEffect(() => {
@@ -20,9 +19,12 @@ const CourseSelector = ({ selectedCourses, onChange }) => {
   const handleAddCourse = () => {
     if (!selectedCourseId) return;
     const courseToAdd = allCourses.find(c => `${c.Subject}-${c.CourseNumber}` === selectedCourseId);
-    // Prevent adding duplicates
-    if (courseToAdd && !currentCourses.some(sc => sc.Subject === courseToAdd.Subject && sc.CourseNumber === courseToAdd.CourseNumber)) {
-      onChange([...currentCourses, { Subject: courseToAdd.Subject, CourseNumber: courseToAdd.CourseNumber }]);
+    if (courseToAdd) {
+        if (singleSelection) {
+            onChange([ { Subject: courseToAdd.Subject, CourseNumber: courseToAdd.CourseNumber }]);
+        } else if (!currentCourses.some(sc => sc.Subject === courseToAdd.Subject && sc.CourseNumber === courseToAdd.CourseNumber)) {
+            onChange([...currentCourses, { Subject: courseToAdd.Subject, CourseNumber: courseToAdd.CourseNumber }]);
+        }
     }
   };
 
@@ -44,7 +46,6 @@ const CourseSelector = ({ selectedCourses, onChange }) => {
         <button type="button" onClick={handleAddCourse} style={styles.button}>Add</button>
       </div>
       <div style={styles.selectedList}>
-        {/* Use the safe currentCourses array for mapping */}
         {currentCourses.map((course, index) => (
           <div key={index} style={styles.chip}>
             {course.Subject} {course.CourseNumber}

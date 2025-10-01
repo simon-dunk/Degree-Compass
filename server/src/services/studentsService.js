@@ -16,7 +16,7 @@ const tableName = config.db_tables.students;
 export const getStudentById = async (studentId) => {
   const params = {
     TableName: tableName,
-    Key: { StudentId: parseInt(studentId, 10) }, // <-- FIXED: Convert string to number
+    Key: { StudentId: parseInt(studentId, 10) },
   };
   try {
     const command = new GetCommand(params);
@@ -37,7 +37,7 @@ export const getStudentById = async (studentId) => {
 export const addOverrideToStudent = async (studentId, overrideData) => {
   const params = {
     TableName: tableName,
-    Key: { StudentId: parseInt(studentId, 10) }, // <-- FIXED: Convert string to number
+    Key: { StudentId: parseInt(studentId, 10) },
     UpdateExpression: 'SET #overrides = list_append(if_not_exists(#overrides, :empty_list), :new_override)',
     ExpressionAttributeNames: {
       '#overrides': 'Overrides',
@@ -113,6 +113,16 @@ export const getAllStudents = async () => {
  * @returns {Promise<object>} The updated student item attributes.
  */
 export const addCompletedCourseToStudent = async (studentId, courseData) => {
+    const student = await getStudentById(studentId);
+    if (student && student.CompletedCourses) {
+        const alreadyCompleted = student.CompletedCourses.some(
+            c => c.Subject === courseData.Subject && c.CourseNumber === courseData.CourseNumber
+        );
+        if (alreadyCompleted) {
+            throw new Error('Student has already completed this course.');
+        }
+    }
+
   const params = {
     TableName: tableName,
     Key: { StudentId: parseInt(studentId, 10) },
@@ -134,4 +144,27 @@ export const addCompletedCourseToStudent = async (studentId, courseData) => {
     console.error(`DynamoDB Error adding completed course to student ${studentId}:`, error);
     throw new Error('Could not add completed course to student.');
   }
+};
+
+/**
+ * Removes a completed course from a student's record by its index.
+ * @param {string} studentId - The ID of the student.
+ * @param {number} courseIndex - The index of the course to remove.
+ * @returns {Promise<object>} The updated student item attributes.
+ */
+export const removeCompletedCourseFromStudent = async (studentId, courseIndex) => {
+    const params = {
+        TableName: tableName,
+        Key: { StudentId: parseInt(studentId, 10) },
+        UpdateExpression: `REMOVE CompletedCourses[${courseIndex}]`,
+        ReturnValues: 'ALL_NEW',
+    };
+    try {
+        const command = new UpdateCommand(params);
+        const { Attributes } = await docClient.send(command);
+        return Attributes;
+    } catch (error) {
+        console.error(`DynamoDB Error removing completed course from student ${studentId}:`, error);
+        throw new Error('Could not remove completed course from student.');
+    }
 };

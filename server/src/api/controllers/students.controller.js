@@ -30,7 +30,6 @@ export const addStudentOverride = async (req, res) => {
     const { studentId } = req.params;
     const overrideData = req.body;
 
-    // Basic validation
     if (!overrideData.SubThis || !overrideData.SubFor) {
       return res.status(400).json({ message: 'Override data must include "SubThis" and "SubFor" properties.' });
     }
@@ -50,7 +49,6 @@ export const addStudentOverride = async (req, res) => {
 export const removeStudentOverride = async (req, res) => {
   try {
     const { studentId, overrideIndex } = req.params;
-    // Convert index from URL string to a number
     const index = parseInt(overrideIndex, 10);
 
     if (isNaN(index)) {
@@ -88,7 +86,6 @@ export const addCompletedCourse = async (req, res) => {
     const { studentId } = req.params;
     const courseData = req.body;
 
-    // Basic validation
     if (!courseData.Subject || !courseData.CourseNumber || !courseData.Grade) {
       return res.status(400).json({ message: 'Course data must include Subject, CourseNumber, and Grade.' });
     }
@@ -98,4 +95,25 @@ export const addCompletedCourse = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Server error adding completed course.', error: error.message });
   }
+};
+
+/**
+ * @desc    Remove a completed course from a student's record
+ * @route   DELETE /api/students/:studentId/completed-courses/:courseIndex
+ * @access  Private (Admin)
+ */
+export const removeCompletedCourse = async (req, res) => {
+    try {
+        const { studentId, courseIndex } = req.params;
+        const index = parseInt(courseIndex, 10);
+
+        if (isNaN(index)) {
+            return res.status(400).json({ message: 'Course index must be a number.' });
+        }
+
+        const updatedStudent = await studentsService.removeCompletedCourseFromStudent(studentId, index);
+        res.status(200).json({ message: 'Completed course removed successfully.', student: updatedStudent });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error removing completed course.', error: error.message });
+    }
 };

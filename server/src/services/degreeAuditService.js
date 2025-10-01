@@ -122,8 +122,8 @@ export const runDegreeAudit = async (studentId) => {
             }
         }
     });
-
-    return { requirementType: rule.RequirementType, isSatisfied, notes, coursesStillNeeded: coursesStillNeededForRule };
+    
+    return { ...rule, isSatisfied, notes, coursesStillNeeded: coursesStillNeededForRule };
   });
 
   const allRemainingCoursesDetails = await getCoursesByKeys(allCoursesStillNeededKeys);

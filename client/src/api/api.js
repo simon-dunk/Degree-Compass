@@ -13,12 +13,11 @@ export const apiRequest = async (url, options = {}) => {
       const errorBody = await response.json();
       throw new Error(errorBody.message || `HTTP error! status: ${response.status}`);
     }
-    // Return an empty object for 204 No Content responses from DELETE
     if (response.status === 204) return {};
     return await response.json();
   } catch (error) {
     console.error('API Request Error:', error.message);
-    throw error; // Re-throw the error to be caught by the component
+    throw error;
   }
 };
 
@@ -132,7 +131,6 @@ export const generatePlan = (studentId, pinnedCourses = [], numSemesters = 8) =>
     headers: {
       'Content-Type': 'application/json',
     },
-    // Send numSemesters in the body
     body: JSON.stringify({ pinnedCourses, numSemesters }),
   });
 };
@@ -155,7 +153,18 @@ export const addCompletedCourse = (studentId, courseData) => {
   });
 };
 
-// --- NEW API FUNCTION ---
+/**
+ * Deletes a completed course from a student's record.
+ * @param {string} studentId - The ID of the student.
+ * @param {number} courseIndex - The index of the course to delete.
+ * @returns {Promise<object>} The server's confirmation response.
+ */
+export const deleteCompletedCourse = (studentId, courseIndex) => {
+    return apiRequest(`${API_BASE_URL}/students/${studentId}/completed-courses/${courseIndex}`, {
+        method: 'DELETE',
+    });
+};
+
 /**
  * Requests the next optimal semester for a student's plan.
  * @param {string} studentId - The ID of the student.

@@ -3,7 +3,7 @@ import NavBar from './NavBar';
 import PlannerPage from '../pages/student/PlannerPage';
 import ScheduleBuilderPage from '../pages/student/ScheduleBuilderPage';
 import RulesPage from '../pages/admin/RulesPage';
-import OverridesPage from '../pages/admin/OverridesPage';
+import StudentManagerPage from '../pages/admin/StudentManagerPage';
 import DevToolsPage from '../pages/dev/DevToolsPage';
 
 const Layout = ({ semestersToSchedule, setSemestersToSchedule }) => {
@@ -16,7 +16,7 @@ const Layout = ({ semestersToSchedule, setSemestersToSchedule }) => {
       case 'schedule': 
         return <ScheduleBuilderPage semesters={semestersToSchedule} />;
       case 'rules': return <RulesPage />;
-      case 'overrides': return <OverridesPage />;
+      case 'student-manager': return <StudentManagerPage />;
       case 'dev': return <DevToolsPage />;
       default: return <PlannerPage />;
     }

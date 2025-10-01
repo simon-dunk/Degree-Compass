@@ -5,12 +5,14 @@ import {
   deleteStudentOverride,
   fetchAllStudents,
   addCompletedCourse,
-  fetchAllCourses
+  fetchAllCourses,
+  deleteCompletedCourse,
 } from '../../api/api';
 import StyledSelect from '../../components/StyledSelect';
 import StyledInput from '../../components/StyledInput';
+import CourseSelector from '../../components/CourseSelector';
 
-const OverridesPage = () => {
+const StudentManagerPage = () => {
   const [students, setStudents] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState('');
@@ -18,8 +20,8 @@ const OverridesPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [subThisCourse, setSubThisCourse] = useState('');
-  const [subForCourses, setSubForCourses] = useState('');
+  const [subThisCourse, setSubThisCourse] = useState([]);
+  const [subForCourses, setSubForCourses] = useState([]);
   const [newCompletedCourse, setNewCompletedCourse] = useState('');
   const [newGrade, setNewGrade] = useState('');
 
@@ -62,22 +64,14 @@ const OverridesPage = () => {
 
   const handleAddOverride = async (e) => {
     e.preventDefault();
-    if (!subThisCourse || !subForCourses) {
-      setError('All override fields are required.');
+    if (subThisCourse.length === 0 || subForCourses.length === 0) {
+      setError('Both "substitute" and "for" fields must have at least one course.');
       return;
     }
 
-    // --- THIS IS THE FIX ---
-    const parseCourse = (courseString) => {
-      const [Subject, CourseNumberStr] = courseString.trim().split(' ');
-      return { Subject, CourseNumber: parseInt(CourseNumberStr, 10) };
-    };
-
-    const subForArray = subForCourses.split(',').map(courseStr => parseCourse(courseStr));
-
     const newOverride = {
-      SubThis: parseCourse(subThisCourse),
-      SubFor: subForArray,
+      SubThis: subThisCourse[0],
+      SubFor: subForCourses,
       ApprovedBy: 'admin-ui',
       ApprovedDate: new Date().toISOString().split('T')[0],
     };
@@ -86,8 +80,8 @@ const OverridesPage = () => {
       const response = await addStudentOverride(selectedStudentId, newOverride);
       setStudentData(response.student);
       setError(null);
-      setSubThisCourse('');
-      setSubForCourses('');
+      setSubThisCourse([]);
+      setSubForCourses([]);
     } catch (err) {
       setError(`Failed to add override: ${err.message}`);
     }
@@ -112,10 +106,13 @@ const OverridesPage = () => {
     }
     
     const [Subject, CourseNumber] = newCompletedCourse.split('-');
+    const courseInfo = allCourses.find(c => c.Subject === Subject && c.CourseNumber === parseInt(CourseNumber, 10));
+
     const courseData = {
       Subject,
       CourseNumber: parseInt(CourseNumber, 10),
-      Grade: parseFloat(newGrade)
+      Grade: parseFloat(newGrade),
+      Credits: courseInfo ? courseInfo.Credits : 0
     };
 
     try {
@@ -129,9 +126,22 @@ const OverridesPage = () => {
     }
   };
 
+  const handleDeleteCompletedCourse = async (index) => {
+    const confirmation = prompt('To confirm deletion, please type "delete" below:');
+    if (confirmation === 'delete') {
+      try {
+        const response = await deleteCompletedCourse(selectedStudentId, index);
+        setStudentData(response.student);
+      } catch (err) {
+        setError(`Failed to delete completed course: ${err.message}`);
+      }
+    }
+  };
+
+
   return (
     <div style={styles.container}>
-      <h1>Student Record Management</h1>
+      <h1>Student Manager</h1>
 
       <div style={styles.selectionContainer}>
         <label htmlFor="student-select" style={styles.label}>Select Student:</label>
@@ -173,6 +183,24 @@ const OverridesPage = () => {
           </div>
 
           <div style={styles.formSection}>
+            <h3>Completed Courses</h3>
+            {studentData.CompletedCourses && studentData.CompletedCourses.length > 0 ? (
+              <ul style={styles.overrideList}>
+                {studentData.CompletedCourses.map((course, index) => (
+                  <li key={index} style={styles.overrideItem}>
+                    <span>
+                      {course.Subject} {course.CourseNumber}&nbsp;&nbsp;|&nbsp;&nbsp;Grade: {course.Grade}&nbsp;&nbsp;|&nbsp;&nbsp;Credits: {course.Credits || 'N/A'}
+                    </span>
+                    <button onClick={() => handleDeleteCompletedCourse(index)} style={{...styles.button, ...styles.deleteButton}}>Delete</button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No completed courses found for this student.</p>
+            )}
+          </div>
+
+          <div style={styles.formSection}>
             <h3>Existing Overrides</h3>
             {studentData.Overrides && studentData.Overrides.length > 0 ? (
               <ul style={styles.overrideList}>
@@ -193,25 +221,15 @@ const OverridesPage = () => {
           <div style={styles.formSection}>
             <h3>Add New Override</h3>
             <form onSubmit={handleAddOverride}>
-              <div style={styles.formRow}>
-                <label>Substitute This Course:</label>
-                <StyledInput
-                  type="text"
-                  value={subThisCourse}
-                  onChange={(e) => setSubThisCourse(e.target.value)}
-                  placeholder="Ex: CIS 2723"
-                />
-              </div>
-              <div style={styles.formRow}>
-                <label>For This Course (or courses, comma-separated):</label>
-                <StyledInput
-                  type="text"
-                  value={subForCourses}
-                  onChange={(e) => setSubForCourses(e.target.value)}
-                  placeholder="Ex: CIS 2143, MATH 1513"
-                />
-              </div>
-              <button type="submit" style={{...styles.button, marginTop: '1rem'}}>Add Override</button>
+                <div style={styles.formRow}>
+                    <label>Substitute This Course:</label>
+                    <CourseSelector selectedCourses={subThisCourse} onChange={setSubThisCourse} singleSelection={true} />
+                </div>
+                <div style={styles.formRow}>
+                    <label>For This Course (or courses):</label>
+                    <CourseSelector selectedCourses={subForCourses} onChange={setSubForCourses} />
+                </div>
+                <button type="submit" style={{...styles.button, marginTop: '1rem'}}>Add Override</button>
             </form>
           </div>
         </div>
@@ -247,4 +265,4 @@ const styles = {
     }
   };
 
-export default OverridesPage;
+export default StudentManagerPage;
