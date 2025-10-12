@@ -3,6 +3,7 @@ import { fetchAuditReport, fetchAllStudents, generateNextSemester } from '../../
 import StyledSelect from '../../components/StyledSelect';
 import ProgressBar from '../../components/ProgressBar';
 import CourseFilter from '../../components/CourseFilter';
+import Modal from '../../components/Modal';
 
 const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
     if (!prerequisites || prerequisites.length === 0) return true;
@@ -79,7 +80,7 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
   const [editingSemesterName, setEditingSemesterName] = useState('');
   const [pinnedElectives, setPinnedElectives] = useState([]);
   const [totalCredits, setTotalCredits] = useState({ completed: 0, required: 0 });
-  const [showFilters, setShowFilters] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filters, setFilters] = useState({ subject: '', courseNumber: '', credits: '' });
 
   const selectedStudentInfo = useMemo(() => {
@@ -321,8 +322,23 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
     }
   };
 
+  const handleApplyFilter = (newFilters) => {
+    setFilters(newFilters);
+  };
+
   return (
     <div style={styles.container}>
+        <Modal
+            isOpen={isFilterModalOpen}
+            onClose={() => setIsFilterModalOpen(false)}
+            title="Filter Pinnable Courses"
+        >
+            <CourseFilter
+                onApply={handleApplyFilter}
+                onClose={() => setIsFilterModalOpen(false)}
+                initialFilters={filters}
+            />
+        </Modal>
       {error && <p style={styles.errorText}>{error}</p>}
       {isLoading ? <p>Loading...</p> : (
         <div style={styles.mainGrid}>
@@ -469,10 +485,9 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
                     </StyledSelect>
                 </div>
                 
-                <button type="button" onClick={() => setShowFilters(!showFilters)} style={styles.filterButton}>
-                    {showFilters ? 'Hide' : 'Show'} Filters
+                <button type="button" onClick={() => setIsFilterModalOpen(true)} style={styles.filterButton}>
+                    Filter Courses
                 </button>
-                {showFilters && <CourseFilter onApplyFilter={setFilters} />}
                 
                 <PinnableCourseList 
                     title="Pin Required Courses"

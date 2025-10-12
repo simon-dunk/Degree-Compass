@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
 import StyledInput from './StyledInput';
 
-const CourseFilter = ({ onApplyFilter }) => {
-  const [subject, setSubject] = useState('');
-  const [courseNumber, setCourseNumber] = useState('');
-  const [credits, setCredits] = useState('');
+const CourseFilter = ({ onApply, onClose, initialFilters = {} }) => {
+  const [subject, setSubject] = useState(initialFilters.subject || '');
+  const [courseNumber, setCourseNumber] = useState(initialFilters.courseNumber || '');
+  const [credits, setCredits] = useState(initialFilters.credits || '');
 
   const handleApply = () => {
-    onApplyFilter({
-      subject: subject.toUpperCase(),
-      courseNumber,
-      credits,
+    onApply({
+      subject: subject.toUpperCase().trim(),
+      courseNumber: courseNumber.trim(),
+      credits: credits.trim(),
     });
+    onClose();
   };
 
   const handleClear = () => {
     setSubject('');
     setCourseNumber('');
     setCredits('');
-    onApplyFilter({
+    onApply({
       subject: '',
       courseNumber: '',
       credits: '',
     });
+    onClose();
   };
 
   return (
@@ -45,8 +47,10 @@ const CourseFilter = ({ onApplyFilter }) => {
         onChange={(e) => setCredits(e.target.value)}
         placeholder="Filter by credits (e.g., 3)"
       />
-      <button type="button" onClick={handleApply} style={styles.button}>Apply</button>
-      <button type="button" onClick={handleClear} style={styles.clearButton}>Clear</button>
+      <div style={styles.buttonGroup}>
+        <button type="button" onClick={handleClear} style={styles.clearButton}>Clear Filters</button>
+        <button type="button" onClick={handleApply} style={styles.button}>Apply Filters</button>
+      </div>
     </div>
   );
 };
@@ -54,8 +58,14 @@ const CourseFilter = ({ onApplyFilter }) => {
 const styles = {
   filterContainer: {
     display: 'flex',
-    gap: '10px',
-    marginBottom: '10px',
+    flexDirection: 'column',
+    gap: '1rem',
+  },
+  buttonGroup: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '1rem',
+    marginTop: '1rem',
   },
   button: {
     backgroundColor: '#005826',

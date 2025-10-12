@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { fetchAllCourses } from '../api/api';
 import StyledSelect from './StyledSelect';
 import CourseFilter from './CourseFilter';
+import Modal from './Modal';
 
 const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) => {
   const [allCourses, setAllCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({ subject: '', courseNumber: '', credits: '' });
+
 
   const currentCourses = Array.isArray(selectedCourses) ? selectedCourses : [];
 
@@ -21,6 +24,7 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
   }, []);
 
   const handleApplyFilter = (filters) => {
+    setActiveFilters(filters);
     let filtered = allCourses;
 
     if (filters.subject) {
@@ -35,7 +39,6 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
 
     setFilteredCourses(filtered);
   };
-
 
   const handleAddCourse = () => {
     if (!selectedCourseId) return;
@@ -55,12 +58,18 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
 
   return (
     <div style={styles.container}>
-        <div style={styles.selectorRow}>
-            <button type="button" onClick={() => setShowFilters(!showFilters)} style={styles.filterButton}>
-                {showFilters ? 'Hide' : 'Show'} Filters
-            </button>
-        </div>
-        {showFilters && <CourseFilter onApplyFilter={handleApplyFilter} />}
+        <Modal
+            isOpen={isFilterModalOpen}
+            onClose={() => setIsFilterModalOpen(false)}
+            title="Filter Courses"
+        >
+            <CourseFilter
+                onApply={handleApplyFilter}
+                onClose={() => setIsFilterModalOpen(false)}
+                initialFilters={activeFilters}
+            />
+        </Modal>
+
       <div style={styles.selectorRow}>
         <StyledSelect value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} style={styles.select}>
           <option value="">-- Select a course to add --</option>
@@ -70,6 +79,9 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
             </option>
           ))}
         </StyledSelect>
+        <button type="button" onClick={() => setIsFilterModalOpen(true)} style={styles.filterButton}>
+              Filter
+        </button>
         <button type="button" onClick={handleAddCourse} style={styles.button}>Add</button>
       </div>
       <div style={styles.selectedList}>

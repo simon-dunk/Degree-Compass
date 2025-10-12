@@ -5,6 +5,7 @@ import TimeTracker from '../../components/TimeTracker';
 import { formatTime12Hour } from '../../utils/formatters';
 import { fetchAllCourses } from '../../api/api';
 import CourseFilter from '../../components/CourseFilter';
+import Modal from '../../components/Modal';
 
 const PRESET_COLORS = [
   '#005826', '#007bff', '#6f42c1', '#d9534f', '#f0ad4e', '#5cb85c',
@@ -43,7 +44,8 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
   
   const [coursePool, setCoursePool] = useState([]);
   const [filteredCoursePool, setFilteredCoursePool] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({ subject: '', courseNumber: '', credits: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hoveredEditIndex, setHoveredEditIndex] = useState(null);
@@ -171,6 +173,7 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
   };
 
   const handleApplyFilter = (filters) => {
+    setActiveFilters(filters);
     let filtered = coursePool;
 
     if (filters.subject) {
@@ -191,6 +194,17 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
 
   return (
     <div style={styles.container}>
+        <Modal
+            isOpen={isFilterModalOpen}
+            onClose={() => setIsFilterModalOpen(false)}
+            title="Filter Course Pool"
+        >
+            <CourseFilter
+                onApply={handleApplyFilter}
+                onClose={() => setIsFilterModalOpen(false)}
+                initialFilters={activeFilters}
+            />
+        </Modal>
         <div style={styles.sidebar}>
           {isCurrentTabEditable ? (
             <>
@@ -204,10 +218,9 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
                       ))}
                   </div>
               </div>
-              <button type="button" onClick={() => setShowFilters(!showFilters)} style={styles.filterButton}>
-                {showFilters ? 'Hide' : 'Show'} Filters
+              <button type="button" onClick={() => setIsFilterModalOpen(true)} style={styles.filterButton}>
+                Filter Courses
               </button>
-              {showFilters && <CourseFilter onApplyFilter={handleApplyFilter} />}
               <div style={styles.poolList}>
                   {isLoading ? <p>Loading courses...</p> : error ? <p style={{color: 'red'}}>{error}</p> : (
                       filteredCoursePool.map(course => (
