@@ -22,7 +22,7 @@ const StudentManagerPage = () => {
 
   const [subThisCourse, setSubThisCourse] = useState([]);
   const [subForCourses, setSubForCourses] = useState([]);
-  const [newCompletedCourse, setNewCompletedCourse] = useState('');
+  const [newCompletedCourse, setNewCompletedCourse] = useState([]);
   const [newGrade, setNewGrade] = useState('');
 
   useEffect(() => {
@@ -100,29 +100,29 @@ const StudentManagerPage = () => {
 
   const handleAddCompletedCourse = async (e) => {
     e.preventDefault();
-    if (!newCompletedCourse || !newGrade) {
-      setError('Please select a course and enter a grade.');
-      return;
+    if (newCompletedCourse.length === 0 || !newGrade) {
+        setError('Please select a course and enter a grade.');
+        return;
     }
-    
-    const [Subject, CourseNumber] = newCompletedCourse.split('-');
-    const courseInfo = allCourses.find(c => c.Subject === Subject && c.CourseNumber === parseInt(CourseNumber, 10));
+
+    const { Subject, CourseNumber } = newCompletedCourse[0];
+    const courseInfo = allCourses.find(c => c.Subject === Subject && c.CourseNumber === CourseNumber);
 
     const courseData = {
-      Subject,
-      CourseNumber: parseInt(CourseNumber, 10),
-      Grade: parseFloat(newGrade),
-      Credits: courseInfo ? courseInfo.Credits : 0
+        Subject,
+        CourseNumber,
+        Grade: parseFloat(newGrade),
+        Credits: courseInfo ? courseInfo.Credits : 0
     };
 
     try {
-      const response = await addCompletedCourse(selectedStudentId, courseData);
-      setStudentData(response.student);
-      setError(null);
-      setNewCompletedCourse('');
-      setNewGrade('');
+        const response = await addCompletedCourse(selectedStudentId, courseData);
+        setStudentData(response.student);
+        setError(null);
+        setNewCompletedCourse([]);
+        setNewGrade('');
     } catch (err) {
-      setError(`Failed to add course: ${err.message}`);
+        setError(`Failed to add course: ${err.message}`);
     }
   };
 
@@ -169,14 +169,7 @@ const StudentManagerPage = () => {
           <div style={styles.formSection}>
             <h3>Add Completed Course</h3>
             <form onSubmit={handleAddCompletedCourse} style={styles.addCourseForm}>
-              <StyledSelect value={newCompletedCourse} onChange={(e) => setNewCompletedCourse(e.target.value)}>
-                <option value="">-- Select a Course --</option>
-                {allCourses.map(c => (
-                  <option key={`${c.Subject}-${c.CourseNumber}`} value={`${c.Subject}-${c.CourseNumber}`}>
-                    {c.Subject} {c.CourseNumber} - {c.Name}
-                  </option>
-                ))}
-              </StyledSelect>
+              <CourseSelector selectedCourses={newCompletedCourse} onChange={setNewCompletedCourse} singleSelection={true} />
               <StyledInput type="number" step="0.1" max="4.0" min="0.0" value={newGrade} onChange={(e) => setNewGrade(e.target.value)} placeholder="Grade (e.g., 4.0)" />
               <button type="submit" style={styles.button}>Add Course</button>
             </form>

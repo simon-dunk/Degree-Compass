@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchAuditReport, fetchAllStudents, generateNextSemester } from '../../api/api';
 import StyledSelect from '../../components/StyledSelect';
 import ProgressBar from '../../components/ProgressBar';
+import CourseFilter from '../../components/CourseFilter';
 
 const arePrerequisitesMet = (prerequisites, allCompletedCourses) => {
     if (!prerequisites || prerequisites.length === 0) return true;
@@ -78,6 +79,8 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
   const [editingSemesterName, setEditingSemesterName] = useState('');
   const [pinnedElectives, setPinnedElectives] = useState([]);
   const [totalCredits, setTotalCredits] = useState({ completed: 0, required: 0 });
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ subject: '', courseNumber: '', credits: '' });
 
   const selectedStudentInfo = useMemo(() => {
     if (!selectedStudentId || students.length === 0) return null;
@@ -271,15 +274,43 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
     lockedSemesters.flatMap(sem => sem.courses.map(c => `${c.Subject}-${c.CourseNumber}`))
   );
   
-  const pinnableCourses = auditReport?.allRemainingCourses.filter(course => {
+  const pinnableCourses = useMemo(() => {
+    let courses = auditReport?.allRemainingCourses.filter(course => {
       const courseId = `${course.Subject}-${course.CourseNumber}`;
       return !plannedCourseIds.has(courseId);
-  }) || [];
-  
-  const availableElectives = auditReport?.availableElectives.filter(course => {
+    }) || [];
+
+    if (filters.subject) {
+      courses = courses.filter(course => course.Subject.includes(filters.subject));
+    }
+    if (filters.courseNumber) {
+      courses = courses.filter(course => String(course.CourseNumber).includes(filters.courseNumber));
+    }
+    if (filters.credits) {
+      courses = courses.filter(course => String(course.Credits) === filters.credits);
+    }
+
+    return courses;
+  }, [auditReport, plannedCourseIds, filters]);
+
+  const availableElectives = useMemo(() => {
+    let courses = auditReport?.availableElectives.filter(course => {
       const courseId = `${course.Subject}-${course.CourseNumber}`;
       return !plannedCourseIds.has(courseId);
-  }) || [];
+    }) || [];
+
+    if (filters.subject) {
+      courses = courses.filter(course => course.Subject.includes(filters.subject));
+    }
+    if (filters.courseNumber) {
+      courses = courses.filter(course => String(course.CourseNumber).includes(filters.courseNumber));
+    }
+    if (filters.credits) {
+      courses = courses.filter(course => String(course.Credits) === filters.credits);
+    }
+
+    return courses;
+  }, [auditReport, plannedCourseIds, filters]);
 
   const handleSendToScheduler = () => {
     if (lockedSemesters.length > 0) {
@@ -438,6 +469,11 @@ const PlannerPage = ({ setSemestersToSchedule, setCurrentPage }) => {
                     </StyledSelect>
                 </div>
                 
+                <button type="button" onClick={() => setShowFilters(!showFilters)} style={styles.filterButton}>
+                    {showFilters ? 'Hide' : 'Show'} Filters
+                </button>
+                {showFilters && <CourseFilter onApplyFilter={setFilters} />}
+                
                 <PinnableCourseList 
                     title="Pin Required Courses"
                     courses={pinnableCourses}
@@ -571,7 +607,17 @@ const styles = {
       marginTop: '5px',
       fontSize: '0.9rem',
       color: '#555'
-    }
+    },
+    filterButton: {
+        backgroundColor: '#6c757d',
+        color: 'white',
+        padding: '10px 20px',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '1rem',
+        marginBottom: '10px',
+    },
 };
 
 export default PlannerPage;

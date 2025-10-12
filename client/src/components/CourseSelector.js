@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAllCourses } from '../api/api';
 import StyledSelect from './StyledSelect';
+import CourseFilter from './CourseFilter';
 
 const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) => {
   const [allCourses, setAllCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const currentCourses = Array.isArray(selectedCourses) ? selectedCourses : [];
 
@@ -12,9 +15,27 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
     const loadCourses = async () => {
       const courses = await fetchAllCourses();
       setAllCourses(courses);
+      setFilteredCourses(courses);
     };
     loadCourses();
   }, []);
+
+  const handleApplyFilter = (filters) => {
+    let filtered = allCourses;
+
+    if (filters.subject) {
+      filtered = filtered.filter(course => course.Subject.includes(filters.subject));
+    }
+    if (filters.courseNumber) {
+      filtered = filtered.filter(course => String(course.CourseNumber).includes(filters.courseNumber));
+    }
+    if (filters.credits) {
+      filtered = filtered.filter(course => String(course.Credits) === filters.credits);
+    }
+
+    setFilteredCourses(filtered);
+  };
+
 
   const handleAddCourse = () => {
     if (!selectedCourseId) return;
@@ -34,10 +55,16 @@ const CourseSelector = ({ selectedCourses, onChange, singleSelection = false }) 
 
   return (
     <div style={styles.container}>
+        <div style={styles.selectorRow}>
+            <button type="button" onClick={() => setShowFilters(!showFilters)} style={styles.filterButton}>
+                {showFilters ? 'Hide' : 'Show'} Filters
+            </button>
+        </div>
+        {showFilters && <CourseFilter onApplyFilter={handleApplyFilter} />}
       <div style={styles.selectorRow}>
         <StyledSelect value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} style={styles.select}>
           <option value="">-- Select a course to add --</option>
-          {allCourses.map(c => (
+          {filteredCourses.map(c => (
             <option key={`${c.Subject}-${c.CourseNumber}`} value={`${c.Subject}-${c.CourseNumber}`}>
               {c.Subject} {c.CourseNumber} - {c.Name}
             </option>
@@ -65,6 +92,15 @@ const styles = {
     button: {
         backgroundColor: '#005826', color: 'white', padding: '10px 20px', border: 'none',
         borderRadius: '5px', cursor: 'pointer', fontSize: '1rem'
+    },
+    filterButton: {
+        backgroundColor: '#6c757d',
+        color: 'white',
+        padding: '10px 20px',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '1rem',
     },
     selectedList: { display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '40px' },
     chip: {

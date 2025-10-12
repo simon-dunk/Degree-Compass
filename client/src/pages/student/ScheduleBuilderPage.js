@@ -4,6 +4,7 @@ import CustomEventForm from '../../components/CustomEventForm';
 import TimeTracker from '../../components/TimeTracker';
 import { formatTime12Hour } from '../../utils/formatters';
 import { fetchAllCourses } from '../../api/api';
+import CourseFilter from '../../components/CourseFilter';
 
 const PRESET_COLORS = [
   '#005826', '#007bff', '#6f42c1', '#d9534f', '#f0ad4e', '#5cb85c',
@@ -41,6 +42,8 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
   const [editingTab, setEditingTab] = useState({ index: -1, name: '' });
   
   const [coursePool, setCoursePool] = useState([]);
+  const [filteredCoursePool, setFilteredCoursePool] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hoveredEditIndex, setHoveredEditIndex] = useState(null);
@@ -60,6 +63,7 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
           return a.CourseNumber - b.CourseNumber;
         });
         setCoursePool(sortedCourses);
+        setFilteredCoursePool(sortedCourses);
       } catch (err) {
         setError('Could not load courses from the database.');
       } finally {
@@ -165,6 +169,22 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
   const handleSelectEvent = (eventId) => {
     setSelectedEventId(prevId => (prevId === eventId ? null : eventId));
   };
+
+  const handleApplyFilter = (filters) => {
+    let filtered = coursePool;
+
+    if (filters.subject) {
+      filtered = filtered.filter(course => course.Subject.includes(filters.subject));
+    }
+    if (filters.courseNumber) {
+      filtered = filtered.filter(course => String(course.CourseNumber).includes(filters.courseNumber));
+    }
+    if (filters.credits) {
+      filtered = filtered.filter(course => String(course.Credits) === filters.credits);
+    }
+
+    setFilteredCoursePool(filtered);
+  };
   
   const currentEvents = allSchedules[activeScheduleIndex] || [];
   const isCurrentTabEditable = isEditing[activeScheduleIndex];
@@ -184,9 +204,13 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
                       ))}
                   </div>
               </div>
+              <button type="button" onClick={() => setShowFilters(!showFilters)} style={styles.filterButton}>
+                {showFilters ? 'Hide' : 'Show'} Filters
+              </button>
+              {showFilters && <CourseFilter onApplyFilter={handleApplyFilter} />}
               <div style={styles.poolList}>
                   {isLoading ? <p>Loading courses...</p> : error ? <p style={{color: 'red'}}>{error}</p> : (
-                      coursePool.map(course => (
+                      filteredCoursePool.map(course => (
                           <div key={`${course.Subject}${course.CourseNumber}`} className="courseItem" style={styles.courseItem} onClick={() => handleAddEvent(course)} title={`Add ${course.Subject} ${course.CourseNumber} to schedule`}>
                               <div style={styles.courseTitle}><strong>{course.Subject} {course.CourseNumber}</strong><span style={styles.courseCredits}>{course.Credits} Credits</span></div>
                               <div style={styles.courseName}>{course.Name}</div>
@@ -282,6 +306,16 @@ const styles = {
     editButton: { fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px', border: '1px solid #6c757d', backgroundColor: 'transparent', color: '#6c757d', cursor: 'pointer', transition: 'background-color 0.2s, color 0.2s' },
     lockButton: { fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px', border: '1px solid #005826', backgroundColor: 'transparent', color: '#005826', cursor: 'pointer', transition: 'background-color 0.2s, color 0.2s' },
     editButtonHover: { backgroundColor: '#6c757d', color: 'white' },
+    filterButton: {
+        backgroundColor: '#6c757d',
+        color: 'white',
+        padding: '10px 20px',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '1rem',
+        marginBottom: '10px',
+    },
 };
 
 export default ScheduleBuilderPage;
