@@ -182,8 +182,23 @@ const ScheduleBuilderPage = ({ semesters = [] }) => {
     if (filters.courseNumber) {
       filtered = filtered.filter(course => String(course.CourseNumber).includes(filters.courseNumber));
     }
+    if (filters.title) {
+      filtered = filtered.filter(course => course.Name.toLowerCase().includes(filters.title.toLowerCase()));
+    }
     if (filters.credits) {
       filtered = filtered.filter(course => String(course.Credits) === filters.credits);
+    }
+    if (filters.days) {
+        filtered = filtered.filter(course => course.Schedule && filters.days.split('').every(day => course.Schedule.Days.includes(day)));
+    }
+    if (filters.startTime) {
+        filtered = filtered.filter(course => course.Schedule && course.Schedule.StartTime >= filters.startTime);
+    }
+    if (filters.endTime) {
+        filtered = filtered.filter(course => course.Schedule && course.Schedule.EndTime <= filters.endTime);
+    }
+    if (filters.instructor) {
+        filtered = filtered.filter(course => course.Instructor && course.Instructor.toLowerCase().includes(filters.instructor.toLowerCase()));
     }
 
     setFilteredCoursePool(filtered);

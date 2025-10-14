@@ -62,13 +62,41 @@ export const getCourseByKey = async (subject, courseNumber) => {
 
 /**
  * Scans the CourseDatabase table to get a list of all courses.
+ * @param {object} filters - An object containing filter criteria.
  * @returns {Promise<object[]>} A promise that resolves to an array of course items.
  */
-export const getAllCourses = async () => {
+export const getAllCourses = async (filters = {}) => {
   const params = { TableName: tableName };
   try {
     const command = new ScanCommand(params);
-    const { Items } = await docClient.send(command);
+    let { Items } = await docClient.send(command);
+
+    if (filters.subject) {
+      Items = Items.filter(course => course.Subject.includes(filters.subject));
+    }
+    if (filters.courseNumber) {
+      Items = Items.filter(course => String(course.CourseNumber).includes(filters.courseNumber));
+    }
+    if (filters.title) {
+        Items = Items.filter(course => course.Name.toLowerCase().includes(filters.title.toLowerCase()));
+    }
+    if (filters.credits) {
+      Items = Items.filter(course => String(course.Credits) === filters.credits);
+    }
+    if (filters.days) {
+        Items = Items.filter(course => course.Schedule && filters.days.split('').every(day => course.Schedule.Days.includes(day)));
+    }
+    if (filters.startTime) {
+        Items = Items.filter(course => course.Schedule && course.Schedule.StartTime >= filters.startTime);
+    }
+    if (filters.endTime) {
+        Items = Items.filter(course => course.Schedule && course.Schedule.EndTime <= filters.endTime);
+    }
+    if (filters.instructor) {
+        Items = Items.filter(course => course.Instructor && course.Instructor.toLowerCase().includes(filters.instructor.toLowerCase()));
+    }
+
+
     return (Items || []).sort((a, b) => a.CourseNumber - b.CourseNumber);
   } catch (error) {
     console.error('DynamoDB Error getting all courses:', error);
