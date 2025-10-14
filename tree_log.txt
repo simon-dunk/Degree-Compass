@@ -1,41 +1,115 @@
 Degree-Compass/
+├── Documentation/
+│   ├── DegreeReqsTable.md
+│   ├── StudentDatabaseModel.md
+│   └── CourseDatabaseModel.md
+├── .DS_Store
 ├── tree_log.txt
 ├── server/
+│   ├── .DS_Store
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── .env
+│   ├── scripts/
+│   │   └── seed.js
 │   └── src/
 │       ├── config/
+│       │   ├── db.js
+│       │   └── config.json
 │       ├── server.js
 │       ├── models/
+│       ├── __tests__/
+│       │   ├── students.test.js
+│       │   ├── audit.test.js
+│       │   ├── rules.test.js
+│       │   └── planner.test.js
 │       ├── api/
 │       │   ├── middleware/
 │       │   ├── controllers/
+│       │   │   ├── students.controller.js
+│       │   │   ├── courses.controller.js
+│       │   │   ├── audit.controller.js
+│       │   │   ├── planner.controller.js
+│       │   │   ├── devTools.controller.js
 │       │   │   └── rules.controller.js
 │       │   └── routes/
-│       │       └── rules.routes.js
+│       │       ├── devTools.routes.js
+│       │       ├── planner.routes.js
+│       │       ├── rules.routes.js
+│       │       ├── students.routes.js
+│       │       ├── audit.routes.js
+│       │       └── courses.routes.js
 │       ├── app.js
 │       └── services/
-│           └── degreeAuditService.js
+│           ├── degreeAuditService.js
+│           ├── studentsService.js
+│           ├── planGeneratorService.js
+│           ├── coursesService.js
+│           ├── devToolsService.js
+│           ├── massDataService.js
+│           └── rulesService.js
 ├── README.md
+├── ROADMAP.md
 ├── .gitignore
+├── .dev-tools/
+│   ├── dynamodb_students.json
+│   └── dummyStudent.py
 ├── dir_creator.sh
 ├── tree_logger.py
+├── data/
+│   ├── ART_Dummy_invalid.csv
+│   └── ART_Dummy_valid.csv
 ├── client/
+│   ├── .DS_Store
 │   ├── public/
+│   │   └── index.html
 │   ├── package-lock.json
 │   ├── package.json
 │   └── src/
 │       ├── index.js
+│       ├── utils/
+│       │   └── formatters.js
 │       ├── components/
+│       │   ├── Layout.js
+│       │   ├── CsvUploader.js
+│       │   ├── TimeTracker.js
+│       │   ├── StyledStudentDetails.js
+│       │   ├── StyledStudentTable.js
+│       │   ├── CourseFilter.js
+│       │   ├── NavBar.js
+│       │   ├── StyledDegreeRequirementDetails.js
+│       │   ├── RuleEditorForm.js
+│       │   ├── StyledInput.js
+│       │   ├── StyledCourseTable.js
+│       │   ├── DataTable.js
+│       │   ├── StyledSelect.js
+│       │   ├── CourseSelector.js
+│       │   ├── CrudForm.js
+│       │   ├── CustomEventForm.js
+│       │   ├── StyledDegreeRequirementsTable.js
+│       │   ├── ProgressBar.js
 │       │   ├── Button.js
-│       │   └── CourseList.js
+│       │   ├── CourseList.js
+│       │   ├── ItemEditorForm.js
+│       │   ├── DaySelector.js
+│       │   ├── TimePicker24Hour.js
+│       │   ├── Modal.js
+│       │   └── CalendarGrid.js
+│       ├── StyledComponents.css
 │       ├── api/
+│       │   ├── devToolsApi.js
 │       │   └── api.js
 │       ├── assets/
 │       ├── pages/
-│       │   ├── RulesPage.js
-│       │   └── PlannerPage.js
+│       │   ├── student/
+│       │   │   ├── ScheduleBuilderPage.js
+│       │   │   └── PlannerPage.js
+│       │   ├── admin/
+│       │   │   ├── StudentManagerPage.js
+│       │   │   └── RulesPage.js
+│       │   └── dev/
+│       │       ├── DevToolsPage.js
+│       │       └── tableSchemas.js
 │       ├── App.js
 │       └── store/
 └── StyleGuide.md

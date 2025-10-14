@@ -20,7 +20,7 @@ def print_directory_tree(start_path, indent="", is_last=False, log_file=None, cu
         all_items = os.listdir(start_path)
         
         # Filter out .git and target folders
-        items = [item for item in all_items if not ((item == ".git" or item == "target") 
+        items = [item for item in all_items if not ((item == ".git" or item == "target" or item == "node_modules") 
                                                    and os.path.isdir(os.path.join(start_path, item)))]
         
         num_items = len(items)
