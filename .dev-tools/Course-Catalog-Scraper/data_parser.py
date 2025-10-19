@@ -11,6 +11,8 @@ from get_env import get_env_value
 # To get a key, visit https://makersuite.google.com/app/apikey
 API_KEY = api_key = get_env_value("API_KEY") # IMPORTANT: REPLACE WITH YOUR ACTUAL API KEY
 
+API_LIMITOR = float(get_env_value("API_LIMITOR"))  # Seconds to wait between API calls
+
 # TODO: Make sure these filenames match your project.
 INPUT_CSV_FILE = "course_catalog.csv"
 OUTPUT_CSV_FILE = "parsed_prerequisites.csv"
@@ -141,7 +143,7 @@ def main():
         else:
             print(f"  - Parsing for '{row.get('course_number', 'Unknown')}': \"{prereq_text}\"")
             parsed_structure = parse_prerequisites_with_ai(ai_model, prereq_text)
-            time.sleep(1) # Rate limit the API calls
+            time.sleep(API_LIMITOR) # Rate limit the API calls
 
         # --- Flatten the JSON structure for CSV columns ---
         flat_record = row.to_dict() # Start with the original data

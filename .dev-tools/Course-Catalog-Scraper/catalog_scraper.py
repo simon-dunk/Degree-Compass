@@ -13,11 +13,16 @@ from urllib.parse import urljoin
 # To get a key, visit https://makersuite.google.com/app/apikey
 API_KEY = api_key = get_env_value("API_KEY") # IMPORTANT: REPLACE WITH YOUR ACTUAL API KEY
 
+API_LIMITOR = float(get_env_value("API_LIMITOR"))  # Seconds to wait between API calls
+
 # This is the correct starting URL for the full course list.
 CATALOG_URL = get_env_value("CATALOG_URL")
 
 # TODO: Customize the CSV filename if you wish.
-OUTPUT_CSV_FILE = "course_catalog.csv"
+OUTPUT_CSV_FILE = ".dev-tools/Course-Catalog-Scraper/course_catalog.csv"
+
+MANNUAL_LIMIT = 10
+
 
 # --- AI Model Setup ---
 try:
@@ -195,7 +200,7 @@ def main():
         page_html = fetch_page_content(page_url)
         if page_html:
             all_course_detail_urls.extend(parse_course_listing_page(page_html, CATALOG_URL))
-        time.sleep(1) # Be polite to the server
+        time.sleep(API_LIMITOR) # Be polite to the server
 
     if not all_course_detail_urls:
         print("Fatal Error: Could not find any course links on any page.")
@@ -209,7 +214,7 @@ def main():
     all_courses_data = []
     for i, detail_url in enumerate(unique_course_urls):
         # --- MANUAL LIMITER FOR TESTING ---
-        if i >= 1: # Limit to 10 courses for a quick test run
+        if i >= MANNUAL_LIMIT: # Limit to 10 courses for a quick test run
             print(f"\n--- Reached manual limit of {i} courses for testing. Stopping. ---")
             break
             
@@ -236,7 +241,7 @@ def main():
             print(f"    -> AI could not process text. Debug info:")
             print(f"    --- TEXT SENT TO AI ---\n{course_text_block}\n    --- END TEXT ---")
             
-        time.sleep(1) 
+        time.sleep(API_LIMITOR) 
             
     if all_courses_data:
         save_to_csv(all_courses_data, OUTPUT_CSV_FILE)
