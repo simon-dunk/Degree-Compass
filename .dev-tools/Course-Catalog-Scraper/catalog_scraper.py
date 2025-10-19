@@ -14,7 +14,7 @@ from urllib.parse import urljoin
 API_KEY = api_key = get_env_value("API_KEY") # IMPORTANT: REPLACE WITH YOUR ACTUAL API KEY
 
 # This is the correct starting URL for the full course list.
-CATALOG_URL = "https://catalog.okbu.edu/content.php?catoid=6&navoid=345"
+CATALOG_URL = get_env_value("CATALOG_URL")
 
 # TODO: Customize the CSV filename if you wish.
 OUTPUT_CSV_FILE = "course_catalog.csv"
