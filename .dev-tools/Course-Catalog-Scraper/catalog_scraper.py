@@ -7,22 +7,113 @@ import google.generativeai as genai
 import time
 from get_env import get_env_value
 from urllib.parse import urljoin
+from collections import deque # Added for efficient tracking
 
 # --- Configuration ---
-# TODO: Paste your Gemini API Key here.
 # To get a key, visit https://makersuite.google.com/app/apikey
 API_KEY = api_key = get_env_value("API_KEY") # IMPORTANT: REPLACE WITH YOUR ACTUAL API KEY
 
-API_LIMITOR = float(get_env_value("API_LIMITOR"))  # Seconds to wait between API calls
+# --- NEW: Rate Limiting Configuration ---
+# Set your API limits here. They can be pulled from .env or defaulted.
+# Peak requests per minute (RPM)
+RPM_LIMIT = int(get_env_value("RPM_LIMIT") or 60)
+# Peak input tokens per minute (TPM)
+TPM_LIMIT = int(get_env_value("TPM_LIMIT") or 1000000)
+# Peak requests per day (RPD)
+RPD_LIMIT = int(get_env_value("RPD_LIMIT") or 1500) # Free tier is often 1500 RPD
 
-# This is the correct starting URL for the full course list.
+# Renamed: This is for being polite to the website server, not for AI throttling
+WEBSITE_SCRAPE_DELAY = float(get_env_value("API_LIMITOR") or 1.0)  # Seconds to wait between website page fetches
+
 CATALOG_URL = get_env_value("CATALOG_URL")
 
 # TODO: Customize the CSV filename if you wish.
 OUTPUT_CSV_FILE = ".dev-tools/Course-Catalog-Scraper/course_catalog.csv"
 
+DO_LIMIT = True
 MANNUAL_LIMIT = 10
 
+
+# --- NEW: Throttler Class ---
+class Throttler:
+    """Manages API rate limits for RPM, TPM, and RPD."""
+    
+    def __init__(self, rpm_limit, tpm_limit, rpd_limit):
+        self.rpm_limit = rpm_limit
+        self.tpm_limit = tpm_limit
+        self.rpd_limit = rpd_limit
+        
+        # Use deques for efficient pop/append from both ends
+        # Tracks timestamps of all requests in the last 24 hours
+        self.request_timestamps = deque()
+        # Tracks (timestamp, token_count) of requests in the last 60 seconds
+        self.token_log = deque()
+        
+        self.day_window = 86400  # 24 hours in seconds
+        self.minute_window = 60    # 60 seconds
+
+    def _prune_logs(self, current_time):
+        """Removes old entries from logs."""
+        # Prune RPD log (timestamps older than 24 hours)
+        while self.request_timestamps and (current_time - self.request_timestamps[0] > self.day_window):
+            self.request_timestamps.popleft()
+            
+        # Prune TPM log (entries older than 60 seconds)
+        while self.token_log and (current_time - self.token_log[0][0] > self.minute_window):
+            self.token_log.popleft()
+
+    def wait_if_needed(self, tokens_for_this_request):
+        """Checks limits and sleeps if necessary. Loops until safe to proceed."""
+        while True:
+            current_time = time.time()
+            self._prune_logs(current_time)
+            
+            # --- 1. Check RPD (Hard Limit) ---
+            if len(self.request_timestamps) >= self.rpd_limit:
+                raise Exception(f"Daily Request Limit (RPD) of {self.rpd_limit} reached. Stopping.")
+
+            # --- 2. Calculate RPM Wait ---
+            rpm_wait = 0
+            # Get requests in the last minute (already pruned, but check window)
+            requests_in_last_minute = [t for t in self.request_timestamps if current_time - t <= self.minute_window]
+            if len(requests_in_last_minute) >= self.rpm_limit:
+                oldest_request_in_window = requests_in_last_minute[0]
+                # Wait until the oldest request is > 60s old
+                rpm_wait = (self.minute_window - (current_time - oldest_request_in_window)) + 0.1 # 0.1s buffer
+                
+            # --- 3. Calculate TPM Wait ---
+            tpm_wait = 0
+            current_tokens_in_window = sum(count for _, count in self.token_log)
+            
+            if (current_tokens_in_window + tokens_for_this_request) > self.tpm_limit:
+                if self.token_log:
+                    # Wait for the oldest token entry to expire
+                    oldest_token_entry_ts = self.token_log[0][0]
+                    tpm_wait = (self.minute_window - (current_time - oldest_token_entry_ts)) + 0.1 # 0.1s buffer
+                elif tokens_for_this_request > self.tpm_limit:
+                    # This single request is too large for the TPM limit
+                    print(f"      -> Warning: Single request token count ({tokens_for_this_request}) "
+                          f"exceeds total TPM limit ({self.tpm_limit}). "
+                          "This may cause an error. Proceeding...")
+                    # We can't wait, so we proceed and hope the API handles it
+            
+            # --- 4. Decide and Act ---
+            wait_duration = max(rpm_wait, tpm_wait)
+            
+            if wait_duration <= 0:
+                # No wait needed, break the loop and proceed
+                break
+                
+            print(f"      -> Throttling: Waiting {wait_duration:.2f}s to respect RPM/TPM limits.")
+            time.sleep(wait_duration)
+            # Loop will repeat to re-check conditions after sleeping
+            
+    def log_request(self, token_count):
+        """Logs a new request timestamp and token count."""
+        current_time = time.time()
+        self.request_timestamps.append(current_time)
+        self.token_log.append((current_time, token_count))
+        
 
 # --- AI Model Setup ---
 try:
@@ -49,7 +140,7 @@ def get_ai_model():
     """Initializes and returns the Gemini AI model."""
     try:
         return genai.GenerativeModel(
-            model_name="gemini-2.5-flash-preview-05-20",
+            model_name=get_env_value("SCRAPER_MODEL") or "gemini-2.5-flash-preview-05-20",
             system_instruction=SYSTEM_PROMPT
         )
     except Exception as e:
@@ -146,6 +237,7 @@ def extract_info_with_ai(model, course_text, max_retries=3):
             print(f"      -> AI response was not valid JSON. Retrying... (Attempt {attempt + 1})")
             time.sleep(2 ** attempt)
         except Exception as e:
+            # This will catch API errors like 429 (Too Many Requests) if the throttler isn't perfect
             print(f"      -> An unexpected AI error occurred: {e}. Retrying... (Attempt {attempt + 1})")
             time.sleep(2 ** attempt)
     print(f"      -> Failed to extract info with AI after {max_retries} retries.")
@@ -178,6 +270,10 @@ def main():
     if not ai_model:
         print("Fatal Error: Could not create AI model. Exiting.")
         return
+        
+    # --- NEW: Initialize the Throttler ---
+    throttler = Throttler(RPM_LIMIT, TPM_LIMIT, RPD_LIMIT)
+    print(f"Throttler initialized: RPM={RPM_LIMIT}, TPM={TPM_LIMIT}, RPD={RPD_LIMIT}")
 
     # --- Stage 1: Gather all course links from all pages ---
     print(f"Fetching main catalog page: {CATALOG_URL}")
@@ -200,7 +296,8 @@ def main():
         page_html = fetch_page_content(page_url)
         if page_html:
             all_course_detail_urls.extend(parse_course_listing_page(page_html, CATALOG_URL))
-        time.sleep(API_LIMITOR) # Be polite to the server
+        # Be polite to the website server
+        time.sleep(WEBSITE_SCRAPE_DELAY) 
 
     if not all_course_detail_urls:
         print("Fatal Error: Could not find any course links on any page.")
@@ -214,9 +311,10 @@ def main():
     all_courses_data = []
     for i, detail_url in enumerate(unique_course_urls):
         # --- MANUAL LIMITER FOR TESTING ---
-        if i >= MANNUAL_LIMIT: # Limit to 10 courses for a quick test run
-            print(f"\n--- Reached manual limit of {i} courses for testing. Stopping. ---")
-            break
+        if DO_LIMIT == True:
+            if i >= MANNUAL_LIMIT:
+                print(f"\n--- Reached manual limit of {i} courses for testing. Stopping. ---")
+                break
             
         print(f"\n--- Scraping Course {i+1}/{len(unique_course_urls)} ---")
         print(f"  -> URL: {detail_url}")
@@ -232,7 +330,30 @@ def main():
             continue
             
         print(f"  -> Found course text. Processing with AI...")
-        ai_result = extract_info_with_ai(ai_model, course_text_block)
+        ai_result = None
+        
+        try:
+            # --- MODIFIED: Throttling Logic ---
+            
+            # 1. Count tokens (this is a fast API call)
+            token_count = ai_model.count_tokens(course_text_block).total_tokens
+            
+            # 2. Wait if needed (this function blocks until safe)
+            throttler.wait_if_needed(token_count)
+            
+            # 3. Log the request and make the call
+            throttler.log_request(token_count)
+            ai_result = extract_info_with_ai(ai_model, course_text_block)
+            
+        except Exception as e:
+            print(f"    -> An error occurred during throttling or AI call: {e}")
+            if "RPD" in str(e):
+                print("    -> Daily quota reached. Stopping script.")
+                break # Exit the for loop
+            # Otherwise, just continue to the next course
+            continue
+        
+        # --- End of Modified Logic ---
         
         if ai_result:
             all_courses_data.append(ai_result)
@@ -241,7 +362,8 @@ def main():
             print(f"    -> AI could not process text. Debug info:")
             print(f"    --- TEXT SENT TO AI ---\n{course_text_block}\n    --- END TEXT ---")
             
-        time.sleep(API_LIMITOR) 
+        # The old time.sleep(API_LIMITOR) is no longer needed here, 
+        # as the Throttler class handles all AI call delays.
             
     if all_courses_data:
         save_to_csv(all_courses_data, OUTPUT_CSV_FILE)
@@ -250,4 +372,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

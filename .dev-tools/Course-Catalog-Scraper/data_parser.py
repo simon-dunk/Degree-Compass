@@ -75,7 +75,7 @@ def get_ai_model():
     """Initializes and returns the Gemini AI model."""
     try:
         return genai.GenerativeModel(
-            model_name="gemini-2.5-flash-preview-05-20",
+            model_name=get_env_value("DATA_PARSER_MODEL") or "gemini-2.5-flash-preview-05-20",
             system_instruction=SYSTEM_PROMPT
         )
     except Exception as e:
