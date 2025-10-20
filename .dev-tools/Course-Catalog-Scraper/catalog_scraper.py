@@ -8,6 +8,8 @@ import time
 from get_env import get_env_value
 from urllib.parse import urljoin
 from collections import deque # Added for efficient tracking
+import argparse # NEW: For handling command-line arguments
+import sys # NEW: For exiting on bad arguments
 
 # --- Configuration ---
 # To get a key, visit https://makersuite.google.com/app/apikey
@@ -28,11 +30,7 @@ WEBSITE_SCRAPE_DELAY = float(get_env_value("API_LIMITOR") or 1.0)  # Seconds to 
 CATALOG_URL = get_env_value("CATALOG_URL")
 
 # TODO: Customize the CSV filename if you wish.
-OUTPUT_CSV_FILE = ".dev-tools/Course-Catalog-Scraper/course_catalog.csv"
-
-DO_LIMIT = True
-MANNUAL_LIMIT = 10
-
+OUTPUT_CSV_FILE = "course_catalog.csv"
 
 # --- NEW: Throttler Class ---
 class Throttler:
@@ -243,23 +241,73 @@ def extract_info_with_ai(model, course_text, max_retries=3):
     print(f"      -> Failed to extract info with AI after {max_retries} retries.")
     return None
 
-def save_to_csv(data, filename):
+# --- MODIFIED: save_to_csv now accepts an 'append' flag ---
+def save_to_csv(data, filename, append=False):
     """Saves a list of course dictionaries to a CSV file."""
     if not data:
         print("No data to save.")
         return
     headers = ["course_number", "title", "credits", "description", "prerequisites"]
+    
+    # NEW: Determine file mode and operation based on 'append' flag
+    file_mode = 'a' if append else 'w'
+    
     try:
-        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(filename, file_mode, newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=headers)
-            writer.writeheader()
+            
+            # NEW: Only write header if NOT appending
+            if not append:
+                writer.writeheader()
+                
             writer.writerows(data)
-        print(f"\nSuccessfully saved {len(data)} courses to {filename}")
+        
+        operation = "appended" if append else "saved"
+        print(f"\nSuccessfully {operation} {len(data)} courses to {filename}")
+        
     except IOError as e:
         print(f"Error writing to CSV file {filename}: {e}")
 
 def main():
     """Main function to run the course catalog scraper."""
+    
+    # --- NEW: Argument Parsing ---
+    parser = argparse.ArgumentParser(description="Scrape a university course catalog.")
+    parser.add_argument(
+        '--limit', 
+        type=int, 
+        default=None, 
+        help='Manually stop after scraping this many courses (for testing).'
+    )
+    parser.add_argument(
+        '--start-at', 
+        type=int, 
+        default=None, 
+        help='Start scraping at this specific course number (1-based). e.g., --start-at 500'
+    )
+    # --- NEW: Added --append argument ---
+    parser.add_argument(
+        '--append',
+        action='store_true', # This stores 'True' if --append is present, 'False' otherwise
+        help='Append data to the existing CSV file instead of overwriting. Headers will be skipped.'
+    )
+    args = parser.parse_args()
+
+    # --- NEW: Set up limit variables based on args ---
+    DO_LIMIT = False
+    MANNUAL_LIMIT = 0
+    if args.limit is not None:
+        DO_LIMIT = True
+        MANNUAL_LIMIT = args.limit
+        print(f"--- Manual stop enabled. Will stop after {MANNUAL_LIMIT} courses. ---")
+    else:
+        print("--- No manual limit set. Will scrape all courses. ---")
+    
+    # --- NEW: Acknowledge append mode ---
+    if args.append:
+        print(f"--- Append mode enabled. Will add to {OUTPUT_CSV_FILE} and skip headers. ---")
+
+
     print("Starting the course catalog scraper...")
     
     if not API_KEY or API_KEY == "YOUR_API_KEY_HERE":
@@ -305,18 +353,50 @@ def main():
     
     # Remove duplicates
     unique_course_urls = sorted(list(set(all_course_detail_urls)))
-    print(f"Found a total of {len(unique_course_urls)} unique course links.")
+    total_courses_found = len(unique_course_urls)
+    print(f"Found a total of {total_courses_found} unique course links.")
+    
+    # --- MODIFIED: Handle --start-at logic for a single number ---
+    start_index = 0
+    urls_to_process = unique_course_urls
+
+    if args.start_at is not None:
+        start_at_number = args.start_at
+        
+        if start_at_number < 1:
+            print(f"Error: --start-at must be a number 1 or greater. Received: {start_at_number}")
+            sys.exit(1)
+            
+        start_index = start_at_number - 1 # Convert 1-based to 0-based index
+            
+        if start_index >= total_courses_found:
+            print(f"Error: --start-at number ({start_at_number}) is larger than the "
+                  f"total courses found ({total_courses_found}).")
+            print("Will not process any courses. Exiting.")
+            return
+
+        urls_to_process = unique_course_urls[start_index:]
+        print(f"--- --start-at {start_at_number} applied. "
+              f"Starting at course {start_at_number} of {total_courses_found} (index {start_index}). ---")
+
     
     # --- Stage 2: Process each unique course link ---
     all_courses_data = []
-    for i, detail_url in enumerate(unique_course_urls):
+    
+    # MODIFIED: Iterate over the potentially sliced list
+    for i, detail_url in enumerate(urls_to_process):
+        
         # --- MANUAL LIMITER FOR TESTING ---
+        # This check is now relative to the start position
+        # e.g., if --limit 10, it will process 10 courses from the start_index
         if DO_LIMIT == True:
             if i >= MANNUAL_LIMIT:
-                print(f"\n--- Reached manual limit of {i} courses for testing. Stopping. ---")
+                print(f"\n--- Reached manual limit of {MANNUAL_LIMIT} courses. Stopping. ---")
                 break
-            
-        print(f"\n--- Scraping Course {i+1}/{len(unique_course_urls)} ---")
+        
+        # MODIFIED: Print statement shows absolute progress
+        current_course_number = i + start_index + 1
+        print(f"\n--- Scraping Course {current_course_number}/{total_courses_found} ---")
         print(f"  -> URL: {detail_url}")
         
         detail_html = fetch_page_content(detail_url)
@@ -366,7 +446,8 @@ def main():
         # as the Throttler class handles all AI call delays.
             
     if all_courses_data:
-        save_to_csv(all_courses_data, OUTPUT_CSV_FILE)
+        # --- MODIFIED: Pass the args.append flag to the save function ---
+        save_to_csv(all_courses_data, OUTPUT_CSV_FILE, append=args.append)
     else:
         print("\nCould not extract any structured course data.")
 
