@@ -1,0 +1,160 @@
+[
+  {
+    "MajorCode": "COMPUTER_SCIENCE_BS",
+    "RequirementType": "COMMON_CORE",
+    "TotalCreditsRequired": 35
+  },
+  {
+    "MajorCode": "COMPUTER_SCIENCE_BS",
+    "RequirementType": "SUPPORTIVE_CORE",
+    "TotalCreditsRequired": 9,
+    "Courses": [
+      {
+        "Subject": "BSAD",
+        "CourseNumber": 2013
+      },
+      {
+        "Subject": "ECON",
+        "CourseNumber": 2013
+      },
+      {
+        "Subject": "ECON",
+        "CourseNumber": 2023
+      },
+      {
+        "Subject": "MATH",
+        "CourseNumber": 2103
+      }
+    ]
+  },
+  {
+    "MajorCode": "COMPUTER_SCIENCE_BS",
+    "RequirementType": "DEGREE_CORE",
+    "TotalCreditsRequired": 70
+  },
+  {
+    "MajorCode": "COMPUTER_SCIENCE_BS",
+    "RequirementType": "CIS_BUSINESS_FOUNDATION",
+    "TotalCreditsRequired": 9,
+    "Courses": [
+      {
+        "Subject": "BSAD",
+        "CourseNumber": 1113
+      },
+      {
+        "Subject": "MGMT",
+        "CourseNumber": 3203
+      },
+      {
+        "Subject": "MGMT",
+        "CourseNumber": 3453
+      }
+    ]
+  },
+  {
+    "MajorCode": "COMPUTER_SCIENCE_BS",
+    "RequirementType": "CS_FOUNDATION",
+    "TotalCreditsRequired": 34,
+    "Courses": [
+      {
+        "Subject": "CIS",
+        "CourseNumber": 1001
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 2703
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 2713
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 2723
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 3103
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 3623
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 3803
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 3813
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 3823
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 4103
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 4203
+      },
+      {
+        "Subject": "MATH",
+        "CourseNumber": 3503
+      }
+    ]
+  },
+  {
+    "MajorCode": "COMPUTER_SCIENCE_BS",
+    "RequirementType": "CS_SPECIALIZED_COURSES",
+    "TotalCreditsRequired": 27,
+    "Courses": [
+      {
+        "Subject": "CIS",
+        "CourseNumber": 2123
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 2523
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 3203
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 3223
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 4013
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 4023
+      },
+      {
+        "Subject": "CIS",
+        "CourseNumber": 4043
+      },
+      {
+        "Subject": "MATH",
+        "CourseNumber": 2023
+      },
+      {
+        "Subject": "MATH",
+        "CourseNumber": 3203
+      }
+    ],
+    "Restrictions": [
+      "All specialized courses must be completed at OBU"
+    ]
+  },
+  {
+    "MajorCode": "COMPUTER_SCIENCE_BS",
+    "RequirementType": "ELECTIVES",
+    "MinCredits": 6
+  }
+]
