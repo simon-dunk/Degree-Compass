@@ -107,10 +107,12 @@ export const runDegreeAudit = async (studentId) => {
       notes = `${creditsEarned} of ${rule.MinCredits} elective credits completed.`;
 
       if (!isSatisfied) {
-        const restrictionText = rule.Restrictions ? ` (${rule.Restrictions.join(', ')})` : '';
+        const subjectsText = Array.isArray(rule.AllowedSubjects) ? rule.AllowedSubjects.join('/') : 'Any';
+        const restrictionText = Array.isArray(rule.Restrictions) ? ` (${rule.Restrictions.join(', ')})` : '';
+        
         coursesStillNeededForRule.push({
             Subject: 'ELECTIVE',
-            CourseNumber: `(${rule.AllowedSubjects.join('/')})${restrictionText}`
+            CourseNumber: `(${subjectsText})${restrictionText}` 
         });
       }
     }
